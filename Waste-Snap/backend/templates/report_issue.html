@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Report an Issue | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page page-narrow">
+
+    <div class="page-header">
+        <div>
+            <h1>Report an issue</h1>
+            <p>Tell us about the waste problem and add a photo.</p>
+        </div>
+    </div>
+
+    {% if strikes >= strike_limit %}
+        <div class="flash flash-danger">
+            Reporting is paused: {{ strike_limit }} of your complaints were rejected as invalid recently.
+        </div>
+    {% elif strikes > 0 %}
+        <div class="flash flash-warning">
+            Warning: {{ strikes }} of your complaints {{ 'was' if strikes == 1 else 'were' }} rejected as invalid.
+            After {{ strike_limit }} strikes you cannot report for a while. Please report only real problems.
+        </div>
+    {% endif %}
+
+    <p class="muted" style="margin-bottom:14px">
+        You can send {{ max_reports }} reports per day. Left today: <strong>{{ reports_left }}</strong>.
+    </p>
+
+    <div class="card">
+
+        <form
+            class="app-form"
+            action="{{ url_for('complaints.report_issue') }}"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <div class="form-group">
+                <label for="type">Issue type</label>
+
+                <select name="type" id="type" required>
+                    <option value="">Select issue type</option>
+                    {% for issue_type in issue_types %}
+                        <option value="{{ issue_type }}">{{ issue_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location</label>
+
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    maxlength="255"
+                    placeholder="Street or area"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="days_existing">How many days has this problem existed?</label>
+
+                <input
+                    type="number"
+                    id="days_existing"
+                    name="days_existing"
+                    min="0"
+                    max="3650"
+                    step="1"
+                    value="0"
+                    required
+                >
+
+                <p class="hint">
+                    Enter 0 if it just appeared. This number keeps counting
+                    up by one every day until the problem is resolved.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="5"
+                    maxlength="2000"
+                    placeholder="Describe the problem..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Photo (JPG, PNG or WEBP)</label>
+
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    required
+                >
+            </div>
+
+            <img id="preview" class="preview" hidden alt="Selected photo preview">
+
+            <button type="submit" class="btn btn-block">
+                Submit report <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </form>
+
+    </div>
+
+</main>
+
+<script>
+    // Preview the selected photograph
+    document.getElementById("image").addEventListener("change", function () {
+
+        var file = this.files[0];
+        var preview = document.getElementById("preview");
+
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.hidden = false;
+        } else {
+            preview.hidden = true;
+        }
+    });
+</script>
+
+{% endblock %}

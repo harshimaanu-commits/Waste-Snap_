@@ -1,0 +1,119 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Create Account | WasteSnap{% endblock %}
+
+{% block card %}
+
+    <div class="auth-card-header">
+
+        <div class="auth-user-icon">
+            <i class="fa-solid fa-user-plus"></i>
+        </div>
+
+        <h2>Create your account</h2>
+
+        <p>Join WasteSnap and help keep your area clean</p>
+
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form action="{{ url_for('auth.register') }}" method="POST">
+
+        <div class="form-group">
+
+            <label for="name">Full name</label>
+
+            <div class="input-wrapper">
+
+                <i class="fa-solid fa-user"></i>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Enter your name"
+                    maxlength="100"
+                    autocomplete="name"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="email">Email</label>
+
+            <div class="input-wrapper">
+
+                <i class="fa-solid fa-envelope"></i>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    maxlength="150"
+                    autocomplete="email"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="password">Password</label>
+
+            <div class="input-wrapper">
+
+                <i class="fa-solid fa-lock"></i>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="At least 8 characters"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="password-toggle"
+                    data-toggle-password="password"
+                    aria-label="Show password"
+                >
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+        <button type="submit" id="registerButton">
+            Create account
+        </button>
+
+    </form>
+
+    <div class="auth-divider"><span>OR</span></div>
+
+    <div class="register-prompt">
+        <span>Already have an account?</span>
+        <a href="{{ url_for('auth.login') }}">Login</a>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

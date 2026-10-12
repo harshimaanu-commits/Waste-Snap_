@@ -1,0 +1,868 @@
+{% extends "base.html" %}
+
+{% block title %}WasteSnap | Cleaner Communities{% endblock %}
+
+{% block content %}
+
+{# Citizens go straight to the report form, everyone else logs in first #}
+{% if current_user.is_authenticated and current_user.role == "citizen" %}
+    {% set report_url = url_for("complaints.report_issue") %}
+{% else %}
+    {% set report_url = url_for("auth.login") %}
+{% endif %}
+
+<main id="home">
+
+
+    <!-- =================================================
+         HERO
+         ================================================= -->
+
+    <section class="hero">
+
+        <div class="hero-background-circle circle-one"></div>
+
+        <div class="hero-background-circle circle-two"></div>
+
+
+        <div class="hero-container">
+
+
+            <!-- LEFT SIDE -->
+
+            <div class="hero-content">
+
+
+                <div class="eyebrow">
+
+                    <span class="pulse-dot"></span>
+
+                    COMMUNITY POWERED CLEANER STREETS
+
+                </div>
+
+
+                <h1>
+
+                    See a problem?
+
+                    <span>
+                        Snap it. Solve it.
+                    </span>
+
+                </h1>
+
+
+                <p>
+
+                    WasteSnap makes it simple to report waste
+                    problems, track their progress and help build
+                    cleaner, healthier communities.
+
+                </p>
+
+
+                <div class="hero-buttons">
+
+
+                    <!--
+                        IMPORTANT:
+                        Logged-out users go to login.
+                        Logged-in users are intercepted
+                        by script.js and sent to #report.
+                    -->
+
+                    <a
+                        href="{{ report_url }}"
+                        class="primary-button report-issue-btn"
+                        
+                    >
+
+                        📷
+
+                        Report an issue
+
+                        →
+
+                    </a>
+
+
+                    <a
+                        href="#how-it-works"
+                        class="secondary-button"
+                    >
+
+                        How it works
+
+                        ↓
+
+                    </a>
+
+                </div>
+
+
+                <!-- COMMUNITY TRUST -->
+
+                <div class="hero-trust">
+
+                    <div class="avatar-stack">
+
+                        <span>👩🏻</span>
+
+                        <span>👨🏻</span>
+
+                        <span>👩🏽</span>
+
+                        <span>👨🏾</span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Community driven
+                        </strong>
+
+                        <small>
+                            Every report makes a difference
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- RIGHT SIDE -->
+
+            <div class="hero-visual">
+
+
+                <!-- DASHBOARD CARD -->
+
+                <div class="dashboard-card">
+
+
+                    <div class="dashboard-top">
+
+                        <div>
+
+                            <small>
+                                WASTESNAP DASHBOARD
+                            </small>
+
+                            <h3>
+                                Community Reports
+                            </h3>
+
+                        </div>
+
+
+                        <div class="live-badge">
+
+                            <span></span>
+
+                            LIVE
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- MAP -->
+
+                    <div class="mini-map">
+
+                        <div class="map-road road-one"></div>
+
+                        <div class="map-road road-two"></div>
+
+                        <div class="map-road road-three"></div>
+
+
+                        <div class="map-pin pin-one">
+                            📍
+                        </div>
+
+                        <div class="map-pin pin-two">
+                            📍
+                        </div>
+
+                        <div class="map-pin pin-three">
+                            📍
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- REPORT 1 -->
+
+                    <div class="report-card">
+
+                        <div class="report-icon">
+                            🗑️
+                        </div>
+
+
+                        <div class="report-info">
+
+                            <strong>
+                                Waste accumulation
+                            </strong>
+
+                            <small>
+                                Reported near your neighbourhood
+                            </small>
+
+                        </div>
+
+
+                        <span class="status pending">
+                            Pending
+                        </span>
+
+                    </div>
+
+
+
+                    <!-- REPORT 2 -->
+
+                    <div class="report-card">
+
+                        <div class="report-icon green">
+                            ✓
+                        </div>
+
+
+                        <div class="report-info">
+
+                            <strong>
+                                Street cleaned
+                            </strong>
+
+                            <small>
+                                Community issue resolved
+                            </small>
+
+                        </div>
+
+
+                        <span class="status resolved">
+                            Resolved
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- FLOATING CARD 1 -->
+
+                <div class="floating-card floating-card-one">
+
+                    <div class="floating-icon">
+                        ♻️
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Cleaner streets
+                        </strong>
+
+                        <small>
+                            One report at a time
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- FLOATING CARD 2 -->
+
+                <div class="floating-card floating-card-two">
+
+                    <div class="floating-icon">
+                        🌱
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Community impact
+                        </strong>
+
+                        <small>
+                            Making neighbourhoods better
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STATS
+         ================================================= -->
+
+    <section class="stats-section">
+
+        <div class="stats-container">
+
+
+            <div class="stat">
+
+                <strong>
+                    24/7
+                </strong>
+
+                <span>
+                    Community reporting
+                </span>
+
+            </div>
+
+
+            <div class="stat">
+
+                <strong>
+                    100%
+                </strong>
+
+                <span>
+                    Community focused
+                </span>
+
+            </div>
+
+
+            <div class="stat">
+
+                <strong>
+                    Fast
+                </strong>
+
+                <span>
+                    Issue reporting
+                </span>
+
+            </div>
+
+
+            <div class="stat">
+
+                <strong>
+                    1 goal
+                </strong>
+
+                <span>
+                    Cleaner communities
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         ABOUT
+         ================================================= -->
+
+    <section
+        class="section"
+        id="about"
+    >
+
+        <div class="section-container">
+
+
+            <div class="about-grid">
+
+
+                <div>
+
+                    <div class="section-label">
+                        ABOUT WASTESNAP
+                    </div>
+
+
+                    <h2>
+
+                        Small reports.
+
+                        <span>
+                            Real change.
+                        </span>
+
+                    </h2>
+
+                </div>
+
+
+
+                <div class="about-content">
+
+
+                    <p>
+
+                        WasteSnap is a community-focused platform
+                        designed to make reporting local waste
+                        problems simple and accessible.
+
+                    </p>
+
+
+                    <p>
+
+                        Instead of ignoring overflowing bins,
+                        dumped waste or dirty public spaces,
+                        residents can report the problem and
+                        follow its progress.
+
+                    </p>
+
+
+                    <p>
+
+                        By connecting citizens, workers and
+                        administrators, WasteSnap helps turn
+                        individual reports into cleaner
+                        neighbourhoods.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         HOW IT WORKS
+         ================================================= -->
+
+    <section
+        class="section light-section"
+        id="how-it-works"
+    >
+
+        <div class="section-container">
+
+
+            <div class="center-heading">
+
+
+                <div class="section-label">
+                    HOW IT WORKS
+                </div>
+
+
+                <h2>
+
+                    From problem
+
+                    <span>
+                        to solution.
+                    </span>
+
+                </h2>
+
+
+                <p>
+
+                    WasteSnap keeps the reporting process
+                    simple and transparent.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="steps-grid">
+
+
+                <!-- STEP 1 -->
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        STEP 01
+                    </div>
+
+
+                    <div class="step-icon">
+                        📷
+                    </div>
+
+
+                    <h3>
+                        Spot the problem
+                    </h3>
+
+
+                    <p>
+
+                        Find a waste issue in your
+                        neighbourhood that needs attention.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- STEP 2 -->
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        STEP 02
+                    </div>
+
+
+                    <div class="step-icon">
+                        📍
+                    </div>
+
+
+                    <h3>
+                        Submit a report
+                    </h3>
+
+
+                    <p>
+
+                        Add the location, waste type,
+                        description and an optional photo.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- STEP 3 -->
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        STEP 03
+                    </div>
+
+
+                    <div class="step-icon">
+                        🔄
+                    </div>
+
+
+                    <h3>
+                        Track progress
+                    </h3>
+
+
+                    <p>
+
+                        Follow your complaint as it moves
+                        from pending to in progress.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- STEP 4 -->
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        STEP 04
+                    </div>
+
+
+                    <div class="step-icon">
+                        🌱
+                    </div>
+
+
+                    <h3>
+                        See the impact
+                    </h3>
+
+
+                    <p>
+
+                        Watch reported problems get resolved
+                        and help create cleaner communities.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         IMPACT
+         ================================================= -->
+
+    <section
+        class="impact-section"
+        id="impact"
+    >
+
+        <div class="section-container">
+
+
+            <div class="impact-grid">
+
+
+                <!-- LEFT -->
+
+                <div>
+
+
+                    <div class="section-label light">
+                        OUR IMPACT
+                    </div>
+
+
+                    <h2>
+
+                        A cleaner
+                        community starts
+                        with one report.
+
+                    </h2>
+
+
+                    <p>
+
+                        When people report waste problems,
+                        communities get better visibility
+                        into what needs attention.
+
+                    </p>
+
+
+                    <!-- REPORT BUTTON -->
+
+                    <a
+                        href="{{ report_url }}"
+                        class="light-button report-issue-btn"
+                        
+                    >
+
+                        Start reporting
+
+                        →
+
+                    </a>
+
+                </div>
+
+
+
+                <!-- RIGHT -->
+
+                <div class="impact-features">
+
+
+                    <div class="impact-feature">
+
+                        <span>
+                            📷
+                        </span>
+
+
+                        <div>
+
+                            <strong>
+                                Easy reporting
+                            </strong>
+
+
+                            <p>
+
+                                Quickly report waste problems
+                                from your neighbourhood.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="impact-feature">
+
+                        <span>
+                            📍
+                        </span>
+
+
+                        <div>
+
+                            <strong>
+                                Location based
+                            </strong>
+
+
+                            <p>
+
+                                Help identify exactly where
+                                attention is needed.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="impact-feature">
+
+                        <span>
+                            📊
+                        </span>
+
+
+                        <div>
+
+                            <strong>
+                                Track progress
+                            </strong>
+
+
+                            <p>
+
+                                Follow complaints from
+                                submission to resolution.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="impact-feature">
+
+                        <span>
+                            🌱
+                        </span>
+
+
+                        <div>
+
+                            <strong>
+                                Better communities
+                            </strong>
+
+
+                            <p>
+
+                                Turn individual actions into
+                                meaningful community impact.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         CALL TO ACTION
+         ================================================= -->
+
+    <section class="cta-section">
+
+        <div class="cta-card">
+
+
+            <div>
+
+                <h2>
+
+                    See a problem?
+
+                    <span>
+                        Be part of the solution.
+                    </span>
+
+                </h2>
+
+
+                <p>
+
+                    Join WasteSnap and help make your
+                    neighbourhood cleaner.
+
+                </p>
+
+            </div>
+
+
+            <a
+                href="{{ report_url }}"
+                class="primary-button report-issue-btn"
+                
+            >
+
+                Get started
+
+                →
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+{% endblock %}

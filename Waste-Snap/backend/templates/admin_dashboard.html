@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, photo, stars, age_chip, deadline_chip %}
+
+{% block title %}Admin Dashboard | WasteSnap{% endblock %}
+
+{# Small "Reject" form: invalid / fake complaints give the citizen a strike #}
+{# "Reject work": the worker's job goes back to them to be done again #}
+{% macro reject_work_form(complaint) %}
+    <details class="reject">
+        <summary class="btn btn-light btn-small">Reject work</summary>
+        <form action="{{ url_for('admin.reject_worker_work', complaint_id=complaint.id) }}" method="POST">
+            <input
+                class="field"
+                type="text"
+                name="reason"
+                maxlength="300"
+                placeholder="What is wrong? (required)"
+                required
+            >
+            <button type="submit" class="btn btn-small btn-danger">Send back to worker</button>
+        </form>
+    </details>
+{% endmacro %}
+
+{% macro reject_form(complaint) %}
+    <details class="reject">
+        <summary class="btn btn-light btn-small">Reject</summary>
+        <form action="{{ url_for('admin.reject', complaint_id=complaint.id) }}" method="POST">
+            <select name="reason" class="field" required>
+                <option value="invalid">Invalid / fake (strike)</option>
+                <option value="duplicate">Duplicate (no strike)</option>
+            </select>
+            <input class="field" type="text" name="note" maxlength="300" placeholder="Reason (optional)">
+            <button type="submit" class="btn btn-small btn-danger">Confirm reject</button>
+        </form>
+    </details>
+{% endmacro %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Complaints</h1>
+            <p>Verify reports, assign workers and resolve finished jobs.</p>
+        </div>
+
+        <a href="{{ url_for('admin.payments') }}" class="btn btn-light">
+            <i class="fa-solid fa-indian-rupee-sign"></i> Payments
+        </a>
+    </div>
+
+    {% if pending_reviews %}
+        <div class="flash flash-warning">
+            <i class="fa-solid fa-star-half-stroke"></i>
+            {{ pending_reviews }} low rating{{ '' if pending_reviews == 1 else 's' }} waiting for your decision.
+            <a href="{{ url_for('admin.reviews') }}"><strong>Review now</strong></a>
+        </div>
+    {% endif %}
+
+    {# The list holds (complaint, citizen) pairs - keep just the complaints for the counts #}
+    {% set all = complaints | map('first') | list %}
+
+    <div class="stat-grid">
+        <div class="stat-tile">
+            <strong>{{ all | selectattr('status', 'equalto', 'Submitted') | list | length }}</strong>
+            <span>Waiting for verification</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ all | selectattr('status', 'in', ['Verified', 'Assigned', 'In Progress']) | list | length }}</strong>
+            <span>Being handled</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ all | selectattr('status', 'equalto', 'Resolved') | list | length }}</strong>
+            <span>Resolved</span>
+        </div>
+        <div class="stat-tile">
+            <strong style="color:#a33b3b">{{ all | selectattr('needs_attention') | list | length }}</strong>
+            <span>Waiting over {{ response_hours }}h (needs you)</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ all | length }}</strong>
+            <span>Total complaints</span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Citizen</th>
+                    <th>Issue</th>
+                    <th>Photos</th>
+                    <th>Status</th>
+                    <th>Worker</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for complaint, citizen in complaints %}
+
+                    <tr class="{{ 'row-alert' if complaint.needs_attention else '' }}">
+                        <td>#{{ complaint.id[-6:] }}</td>
+
+                        <td>{{ citizen.name }}</td>
+
+                        <td>
+                            <strong>{{ complaint.type }}</strong><br>
+                            {{ complaint.description }}<br>
+                            <span class="muted">{{ complaint.location }}</span>
+                            <div style="margin-top:6px">{{ age_chip(complaint.existing_days) }}</div>
+
+                            {% if complaint.needs_attention %}
+                                <div style="margin-top:6px">
+                                    <span class="chip chip-red">
+                                        <i class="fa-solid fa-bell"></i>
+                                        Waiting {{ complaint.waiting_days }} day{{ '' if complaint.waiting_days == 1 else 's' }}: please verify or reject
+                                    </span>
+                                </div>
+                            {% endif %}
+
+                            {% if complaint.possible_duplicate_of %}
+                                <div style="margin-top:6px">
+                                    <span class="chip chip-blue">
+                                        <i class="fa-regular fa-copy"></i>
+                                        Possible duplicate of #{{ complaint.possible_duplicate_of[-6:] }}
+                                    </span>
+                                </div>
+                            {% endif %}
+
+                            {% if complaint.work_rejected_count %}
+                                <div style="margin-top:6px">
+                                    <span class="chip chip-red">
+                                        <i class="fa-solid fa-ban"></i>
+                                        Work rejected{% if complaint.work_rejected_count > 1 %} ({{ complaint.work_rejected_count }}x){% endif %}: {{ complaint.work_rejected_reason or '' }}
+                                    </span>
+                                </div>
+                                {{ photo(complaint.rejected_work_image, "Rejected proof") }}
+                            {% endif %}
+
+                            {% if complaint.reopened %}
+                                <div style="margin-top:6px">
+                                    <span class="chip chip-purple">
+                                        <i class="fa-solid fa-rotate-left"></i> Reopened: {{ complaint.reopen_reason }}
+                                    </span>
+                                </div>
+                                {{ photo(complaint.previous_resolution_image, "Old proof") }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="photo-row" style="margin-top:0">
+                                {{ photo(complaint.image_filename, "Reported") }}
+                                {{ photo(complaint.resolution_image_filename, "Fixed") }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ status_badge(complaint.status) }}
+                            {% if complaint.status == "Rejected" %}
+                                <div class="muted small" style="margin-top:6px">
+                                    {{ 'Invalid (strike)' if complaint.rejected_reason == 'invalid' else 'Duplicate' }}
+                                    {% if complaint.rejected_note %}: {{ complaint.rejected_note }}{% endif %}
+                                </div>
+                            {% endif %}
+                            {% if complaint.rating_penalty == "pending" %}
+                                <div style="margin-top:6px"><span class="chip chip-blue">Low rating: review needed</span></div>
+                            {% endif %}
+                            {% if complaint.feedback_rating %}
+                                <div style="margin-top:6px">{{ stars(complaint.feedback_rating) }}</div>
+                                {% if complaint.feedback_comment %}
+                                    <div class="muted" style="max-width:200px">"{{ complaint.feedback_comment }}"</div>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ complaint.worker_name or "-" }}
+                            <div style="margin-top:6px">{{ deadline_chip(complaint) }}</div>
+                            {% if complaint.start_overdue %}
+                                <div style="margin-top:6px"><span class="chip chip-red">Not started yet</span></div>
+                            {% endif %}
+                            {% if complaint.worker_done and complaint.was_late %}
+                                <div style="margin-top:6px"><span class="chip chip-red">Finished late</span></div>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ complaint.created_at.strftime('%d %b %Y') }}</td>
+
+                        <td>
+
+                            {% if complaint.status == "Submitted" %}
+
+                                <form action="{{ url_for('admin.verify', complaint_id=complaint.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-small">Verify</button>
+                                </form>
+                                {{ reject_form(complaint) }}
+
+                            {% elif complaint.status == "Verified" %}
+
+                                {% if workers %}
+                                    <form class="inline-form" action="{{ url_for('admin.assign', complaint_id=complaint.id) }}" method="POST">
+                                        <select name="worker_id" class="field" required>
+                                            <option value="">Choose worker</option>
+                                            {% for worker in workers %}
+                                                <option value="{{ worker.id }}">{{ worker.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-small">Assign</button>
+                                    </form>
+                                {% else %}
+                                    <span class="muted">No workers yet</span>
+                                {% endif %}
+                                {{ reject_form(complaint) }}
+
+                            {% elif complaint.status == "Assigned" %}
+
+                                <span class="muted">Waiting for worker</span>
+
+                            {% elif complaint.status == "In Progress" %}
+
+                                {% if complaint.worker_done %}
+                                    <form action="{{ url_for('admin.resolve', complaint_id=complaint.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-small">Resolve</button>
+                                    </form>
+                                    {{ reject_work_form(complaint) }}
+                                {% else %}
+                                    <span class="muted">Worker is working</span>
+                                {% endif %}
+
+                            {% elif complaint.status == "Rejected" %}
+
+                                <span class="muted">Rejected</span>
+
+                            {% else %}
+
+                                <span class="muted">Completed</span>
+
+                            {% endif %}
+
+                        </td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="8" class="muted" style="text-align:center">No complaints yet.</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</main>
+
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+
+{% block title %}Payments | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Company payments</h1>
+            <p>Pay a company for cleanup work on resolved complaints.</p>
+        </div>
+
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light">
+            <i class="fa-solid fa-arrow-left"></i> Complaints
+        </a>
+    </div>
+
+    <div class="card">
+
+        <h2>Resolved complaints without a payment</h2>
+
+        {% if not companies %}
+            <p class="muted">
+                There are no company accounts yet. Create one with
+                <code>python create_company.py</code>.
+            </p>
+        {% endif %}
+
+        {% for complaint in unpaid_complaints %}
+
+            <div class="complaint-head" style="border-top:1px solid var(--border); padding-top:14px">
+
+                <div>
+                    <strong>{{ complaint.type }}</strong>
+                    <span class="muted">· #{{ complaint.id[-6:] }}</span>
+                    <div class="muted">{{ complaint.location }}</div>
+                    {% if complaint.was_late %}
+                        <span class="chip chip-red">
+                            Worker finished late: ₹{{ late_penalty }} will be deducted
+                        </span>
+                    {% endif %}
+                    {% if complaint.rating_penalty == "approved" %}
+                        <span class="chip chip-red">Low rating penalty approved: ₹{{ rating_penalty }} will be deducted</span>
+                    {% elif complaint.rating_penalty == "pending" %}
+                        <span class="chip chip-blue">
+                            Low rating waiting for review (the payment cannot be paid until you decide)
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if companies %}
+                    <form
+                        class="inline-form"
+                        action="{{ url_for('admin.create_company_payment', complaint_id=complaint.id) }}"
+                        method="POST"
+                    >
+                        <select name="company_id" class="field" required>
+                            <option value="">Choose company</option>
+                            {% for company in companies %}
+                                <option value="{{ company.id }}">{{ company.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <input
+                            class="field"
+                            type="number"
+                            name="amount"
+                            min="1"
+                            step="0.01"
+                            placeholder="Amount (₹)"
+                            required
+                        >
+
+                        <button type="submit" class="btn btn-small">Create payment</button>
+                    </form>
+                {% endif %}
+
+            </div>
+
+        {% else %}
+
+            <p class="muted">Every resolved complaint already has a payment.</p>
+
+        {% endfor %}
+
+    </div>
+
+    <h2 style="margin:30px 0 14px">All payments</h2>
+
+    <div class="table-wrap">
+        <table class="table">
+
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Company</th>
+                    <th>Complaint</th>
+                    <th>Amount</th>
+                    <th>Penalty</th>
+                    <th>Net pay</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for payment in payments %}
+
+                    <tr>
+                        <td>{{ payment.reference }}</td>
+                        <td>{{ payment.company_name }}</td>
+                        <td>
+                            {{ payment.complaint_type }}<br>
+                            <span class="muted">#{{ payment.complaint_ref }} · {{ payment.complaint_location }}</span>
+                        </td>
+                        <td>₹{{ "%.2f"|format(payment.amount) }}</td>
+                        <td>
+                            {% if payment.penalty %}
+                                <span class="chip chip-red"
+                                    title="Late: ₹{{ payment.penalty_late or 0 }}, low rating: ₹{{ payment.penalty_rating or 0 }}">-₹{{ "%.2f"|format(payment.penalty) }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><strong>₹{{ "%.2f"|format(payment.net_amount) }}</strong></td>
+                        <td>{{ status_badge(payment.status) }}</td>
+                        <td>{{ payment.created_at.strftime('%d %b %Y') }}</td>
+                        <td>
+                            {% if payment.status == "pending" and payment.rating_review == "pending" %}
+                                <a class="btn btn-light btn-small" href="{{ url_for('admin.reviews') }}">
+                                    Review the low rating first
+                                </a>
+                            {% elif payment.status == "pending" %}
+                                <form action="{{ url_for('admin.pay', payment_id=payment.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-small">Mark as paid</button>
+                                </form>
+                            {% elif payment.status == "on_hold" %}
+                                <span class="muted">On hold: the citizen reopened the complaint</span>
+                            {% else %}
+                                <span class="muted">Paid {{ payment.paid_at.strftime('%d %b %Y') }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="9" class="muted" style="text-align:center">No payments yet.</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</main>
+
+{% endblock %}

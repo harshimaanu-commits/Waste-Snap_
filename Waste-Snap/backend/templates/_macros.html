@@ -1,0 +1,57 @@
+{# Small pieces shared by several pages #}
+
+{# Coloured badge for a complaint or payment status #}
+{% macro status_badge(status) %}
+    <span class="badge badge-{{ status | lower | replace(' ', '-') }}">{{ status }}</span>
+{% endmacro %}
+
+{# A photo with a small label above it #}
+{% macro photo(filename, label) %}
+    {% if filename %}
+        <div>
+            <span class="photo-label">{{ label }}</span>
+            <a href="{{ url_for('static', filename='uploads/' ~ filename) }}" target="_blank">
+                <img class="thumb" src="{{ url_for('static', filename='uploads/' ~ filename) }}" alt="{{ label }}">
+            </a>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{# Star rating, for example 4 out of 5 #}
+{% macro stars(n) %}
+    <span class="stars" title="{{ n }} out of 5">
+        {% for i in range(1, 6) %}
+            <i class="fa-{{ 'solid' if i <= n else 'regular' }} fa-star"></i>
+        {% endfor %}
+    </span>
+{% endmacro %}
+
+{# "Existing for N days" tag. The number goes up by one every day. #}
+{% macro age_chip(days) %}
+    <span class="chip">
+        <i class="fa-solid fa-hourglass-half"></i>
+        Existing for {{ days }} day{{ '' if days == 1 else 's' }}
+    </span>
+{% endmacro %}
+
+{# Deadline tag for a job that is assigned to a worker #}
+{% macro deadline_chip(complaint) %}
+    {% if complaint.deadline and complaint.status in ['Assigned', 'In Progress'] and not complaint.worker_done %}
+        {% if complaint.is_overdue %}
+            <span class="chip chip-red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Overdue (was due {{ complaint.deadline.strftime('%d %b') }})
+            </span>
+        {% elif complaint.days_left == 0 %}
+            <span class="chip chip-red">
+                <i class="fa-regular fa-clock"></i> Due today
+            </span>
+        {% else %}
+            <span class="chip">
+                <i class="fa-regular fa-clock"></i>
+                {{ complaint.days_left }} day{{ '' if complaint.days_left == 1 else 's' }} left
+                (due {{ complaint.deadline.strftime('%d %b') }})
+            </span>
+        {% endif %}
+    {% endif %}
+{% endmacro %}

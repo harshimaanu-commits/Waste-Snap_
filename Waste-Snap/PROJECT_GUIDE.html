@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WasteSnap Project Guide</title>
+<style>
+:root{
+  --bg:#f6f8f2; --card:#ffffff; --text:#12372b; --muted:#5d7a6f; --line:#d5e3db;
+  --green:#0d6044; --green-soft:#e3f4ea;
+  --blue:#1b5d8a; --blue-soft:#e1f0fb;
+  --amber:#8a6410; --amber-soft:#fff3d6;
+  --purple:#5b3fa0; --purple-soft:#ece7fb;
+  --red:#a33b3b; --red-soft:#fdeaea;
+  --code-bg:#0f2a21; --code-text:#d7f5e5;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1f18; --card:#14302a; --text:#e3f1ea; --muted:#9bb8ac; --line:#27493d;
+    --green:#6fd3a6; --green-soft:#17402f;
+    --blue:#7cc0ee; --blue-soft:#16364b;
+    --amber:#f0c36a; --amber-soft:#403315;
+    --purple:#b9a5f2; --purple-soft:#2d2551;
+    --red:#f19a9a; --red-soft:#442020;
+    --code-bg:#08140f; --code-text:#d7f5e5;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.hero{background:linear-gradient(135deg,#073b2a,#167653);color:#fff;padding:54px 0 46px}
+header.hero h1{margin:0 0 8px;font-size:clamp(28px,5vw,42px);line-height:1.15}
+header.hero p{margin:0;max-width:720px;color:#d8f3e4;font-size:18px}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 20px}
+nav.toc a{flex:none;padding:6px 12px;border-radius:999px;color:var(--text);
+  text-decoration:none;font-size:14px;font-weight:600;border:1px solid transparent}
+nav.toc a:hover{border-color:var(--line);background:var(--green-soft)}
+section{padding:42px 0 6px}
+h2{font-size:28px;margin:0 0 6px;line-height:1.25}
+h2 .num{display:inline-block;min-width:34px;height:34px;line-height:34px;margin-right:10px;
+  text-align:center;border-radius:50%;background:var(--green);color:var(--bg);font-size:16px;vertical-align:middle}
+h3{font-size:19px;margin:28px 0 8px}
+p{margin:0 0 14px}
+.lead{color:var(--muted);font-size:17px;margin-bottom:20px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h4{margin:0 0 4px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700;margin-right:4px}
+.t-green{background:var(--green-soft);color:var(--green)}
+.t-blue{background:var(--blue-soft);color:var(--blue)}
+.t-amber{background:var(--amber-soft);color:var(--amber)}
+.t-purple{background:var(--purple-soft);color:var(--purple)}
+.t-red{background:var(--red-soft);color:var(--red)}
+.note{border-left:4px solid var(--green);background:var(--green-soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+.note.warn{border-color:var(--amber);background:var(--amber-soft)}
+.note p{margin:0}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--green-soft);
+  color:var(--green);padding:1px 6px;border-radius:5px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:12px;overflow-x:auto;
+  font:13.5px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:12px 0 18px}
+pre code{background:none;color:inherit;padding:0}
+figure{margin:18px 0 26px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:8px;color:var(--muted);font-size:14px;text-align:center}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;overflow:hidden;font-size:14.5px;margin:12px 0 20px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--green-soft);color:var(--green);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto}
+.files{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.folder{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.folder h4{margin:0;padding:10px 16px;background:var(--green-soft);color:var(--green);
+  font:700 14px ui-monospace,Menlo,Consolas,monospace}
+.folder ul{list-style:none;margin:0;padding:6px 16px 12px}
+.folder li{padding:7px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+.folder li:last-child{border-bottom:0}
+.folder li b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px}
+.steps{counter-reset:s;list-style:none;margin:12px 0 20px;padding:0}
+.steps li{counter-increment:s;position:relative;padding:4px 0 10px 46px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:30px;height:30px;line-height:30px;
+  text-align:center;border-radius:50%;background:var(--green);color:var(--bg);font-weight:700;font-size:14px}
+.yes{color:var(--green);font-weight:800}.no{color:var(--muted)}
+footer{margin-top:50px;padding:30px 0 50px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+
+/* svg styling */
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.n{fill:var(--card);stroke:var(--line);stroke-width:1.6}
+.g{fill:var(--green-soft);stroke:var(--green);stroke-width:1.6}
+.b{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1.6}
+.a{fill:var(--amber-soft);stroke:var(--amber);stroke-width:1.6}
+.p{fill:var(--purple-soft);stroke:var(--purple);stroke-width:1.6}
+.r{fill:var(--red-soft);stroke:var(--red);stroke-width:1.6}
+.cont{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:6 5}
+.t{fill:var(--text);font-size:14px;font-weight:700}
+.s{fill:var(--muted);font-size:12px}
+.m{fill:var(--text);font-size:12.5px}
+.ar{stroke:var(--muted);stroke-width:2;fill:none}
+.dash{stroke-dasharray:6 4}
+.ah{fill:var(--muted)}
+.life{stroke:var(--line);stroke-width:2;stroke-dasharray:4 5}
+.badge{fill:var(--green)}
+.bn{fill:var(--bg);font-size:12px;font-weight:700;text-anchor:middle}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>WasteSnap: the complete beginner's guide</h1>
+    <p>What the project does, how every file fits together, and how data moves from a button click all the way to the database and back. No prior Flask or MongoDB knowledge needed.</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#big-picture">Big picture</a>
+    <a href="#tech">Technologies</a>
+    <a href="#architecture">How it works</a>
+    <a href="#files">File map</a>
+    <a href="#code">Code walkthrough</a>
+    <a href="#data">Database</a>
+    <a href="#lifecycle">Complaint lifecycle</a>
+    <a href="#auth">Login &amp; security</a>
+    <a href="#payments">Payments</a>
+    <a href="#journey">What we did</a>
+    <a href="#limits">Limits &amp; next</a>
+    <a href="#glossary">Glossary</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============================================================ 1 -->
+<section id="big-picture">
+  <h2><span class="num">1</span>The big picture</h2>
+  <p class="lead">WasteSnap is a website where people report waste problems (garbage piles, overflowing bins, illegal dumping) and the city handles them.</p>
+
+  <p>Think of it as a small ticket system for waste. A <b>complaint</b> is a ticket. It starts when a citizen reports a problem with a photo, and it ends when it is cleaned up and the proof photo is checked. Four kinds of users take part:</p>
+
+  <div class="grid">
+    <div class="card"><h4><span class="tag t-green">Citizen</span></h4>
+      <p>Signs up on the website. Reports problems with a photo and says how many days the problem has existed (a counter that grows every day). Follows each report, and rates the cleanup once it is resolved.</p></div>
+    <div class="card"><h4><span class="tag t-blue">Admin</span></h4>
+      <p>The manager. Checks (verifies) new reports, assigns them to a worker, and resolves them once the work is proved. Also pays companies.</p></div>
+    <div class="card"><h4><span class="tag t-amber">Worker</span></h4>
+      <p>Does the cleaning. Sees only the tasks given to them, starts the work, and uploads an "after" photo. Has 7 days per job; finishing late costs ₹50.</p></div>
+    <div class="card"><h4><span class="tag t-purple">Company</span></h4>
+      <p>A contractor. After a complaint is resolved, the admin creates a payment for the company. The company sees what it is owed or has been paid.</p></div>
+  </div>
+
+  <div class="note"><p><b>It is a demo.</b> Payments are just records in the database (no real money moves) and the project is built to be understandable, not to handle a whole city. Section 12 lists what a real product would add.</p></div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="tech">
+  <h2><span class="num">2</span>The technologies, in plain words</h2>
+  <p class="lead">Everything the project is built from. Each one solves one small problem.</p>
+
+  <div class="grid">
+    <div class="card"><h4>Python</h4><p>The programming language the whole back end is written in.</p></div>
+    <div class="card"><h4>Flask</h4><p>A small Python library that turns functions into web pages. You write <code>def login()</code>, tell Flask "run this when someone visits /login", and it handles the web part.</p></div>
+    <div class="card"><h4>Jinja templates</h4><p>HTML files with blanks in them, like <code>Hello, {{ current_user.name }}</code>. Flask fills the blanks before sending the page to the browser.</p></div>
+    <div class="card"><h4>Blueprints</h4><p>Flask's way to split many routes into separate files (<code>auth.py</code>, <code>admin.py</code>...) so one file does not become huge.</p></div>
+    <div class="card"><h4>Flask-Login</h4><p>Remembers who is logged in using a cookie, and provides <code>@login_required</code> and <code>current_user</code>.</p></div>
+    <div class="card"><h4>MongoDB Atlas</h4><p>The database, hosted in the cloud, so you and your friend share the same data from different laptops.</p></div>
+    <div class="card"><h4>pymongo</h4><p>The Python library that talks to MongoDB.</p></div>
+    <div class="card"><h4>Werkzeug</h4><p>Comes with Flask. We use it to turn passwords into scrambled "hashes" so real passwords are never stored.</p></div>
+    <div class="card"><h4>python-dotenv</h4><p>Reads secret settings (like the database password) from a <code>.env</code> file so they never go into the code or GitHub.</p></div>
+    <div class="card"><h4>HTML, CSS, a little JavaScript</h4><p>The pages you see. CSS (from your friend's design) makes them green and pretty. JavaScript is only used for the show/hide password eye and the photo preview.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="architecture">
+  <h2><span class="num">3</span>How the pieces work together</h2>
+  <p class="lead">Every click follows the same path. Learn this once and the whole project makes sense.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 360" role="img" aria-label="Architecture: browser, Flask app, MongoDB Atlas">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+
+      <rect class="cont" x="205" y="22" width="500" height="320" rx="16"/>
+      <text class="s" x="225" y="46">Flask app (the <tspan font-weight="700">backend/</tspan> folder, started by app.py)</text>
+
+      <rect class="g" x="20" y="130" width="145" height="120" rx="12"/>
+      <text class="t" x="92" y="175" text-anchor="middle">Browser</text>
+      <text class="s" x="92" y="196" text-anchor="middle">Chrome, Edge, Safari</text>
+      <text class="s" x="92" y="212" text-anchor="middle">what the user sees</text>
+
+      <rect class="b" x="235" y="130" width="200" height="120" rx="12"/>
+      <text class="t" x="335" y="170" text-anchor="middle">routes/</text>
+      <text class="s" x="335" y="192" text-anchor="middle">auth, complaints, admin,</text>
+      <text class="s" x="335" y="208" text-anchor="middle">workers, company</text>
+      <text class="s" x="335" y="228" text-anchor="middle">decide what to do</text>
+
+      <rect class="a" x="470" y="130" width="205" height="120" rx="12"/>
+      <text class="t" x="572" y="170" text-anchor="middle">db_helpers.py</text>
+      <text class="s" x="572" y="192" text-anchor="middle">every read and write to</text>
+      <text class="s" x="572" y="208" text-anchor="middle">the database lives here</text>
+      <text class="s" x="572" y="228" text-anchor="middle">(+ models.py connection)</text>
+
+      <rect class="p" x="235" y="278" width="200" height="50" rx="10"/>
+      <text class="t" x="335" y="300" text-anchor="middle">templates/</text>
+      <text class="s" x="335" y="317" text-anchor="middle">HTML pages with blanks</text>
+
+      <rect class="n" x="470" y="278" width="205" height="50" rx="10"/>
+      <text class="t" x="572" y="300" text-anchor="middle">static/</text>
+      <text class="s" x="572" y="317" text-anchor="middle">CSS, JS, uploaded photos</text>
+
+      <rect class="r" x="740" y="130" width="140" height="120" rx="12"/>
+      <text class="t" x="810" y="175" text-anchor="middle">MongoDB Atlas</text>
+      <text class="s" x="810" y="196" text-anchor="middle">cloud database</text>
+      <text class="s" x="810" y="212" text-anchor="middle">users, complaints,</text>
+      <text class="s" x="810" y="228" text-anchor="middle">payments</text>
+
+      <path class="ar" d="M165 168H235" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M235 212H165" marker-end="url(#ah)"/>
+      <path class="ar" d="M435 168H470" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M470 212H435" marker-end="url(#ah)"/>
+      <path class="ar" d="M675 168H740" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M740 212H675" marker-end="url(#ah)"/>
+      <path class="ar" d="M335 250V278" marker-end="url(#ah)"/>
+
+      <circle class="badge" cx="200" cy="154" r="11"/><text class="bn" x="200" y="158">1</text>
+      <circle class="badge" cx="452" cy="154" r="11"/><text class="bn" x="452" y="158">2</text>
+      <circle class="badge" cx="707" cy="154" r="11"/><text class="bn" x="707" y="158">3</text>
+      <circle class="badge" cx="707" cy="228" r="11"/><text class="bn" x="707" y="232">4</text>
+      <circle class="badge" cx="352" cy="264" r="11"/><text class="bn" x="352" y="268">5</text>
+      <circle class="badge" cx="200" cy="228" r="11"/><text class="bn" x="200" y="232">6</text>
+    </svg>
+    <figcaption>Solid arrows are requests going in. Dashed arrows are answers coming back.</figcaption>
+  </figure>
+
+  <h3>The life of one request</h3>
+  <p>Say the admin clicks <b>Verify</b> on a complaint:</p>
+  <ol class="steps">
+    <li>The <b>browser</b> sends a request: <code>POST /admin/verify/6520ab...</code></li>
+    <li>Flask finds the matching function in <code>routes/admin.py</code>. It checks the user is logged in and is an admin.</li>
+    <li>The route asks <code>db_helpers.py</code>: "verify complaint 6520ab...".</li>
+    <li>The helper sends one instruction to <b>MongoDB Atlas</b>: "if this complaint's status is Submitted, change it to Verified".</li>
+    <li>MongoDB replies whether it changed anything. The helper returns <code>True</code> or <code>False</code>.</li>
+    <li>The route shows a green or yellow message and redirects to <code>/admin</code>. That request runs again, the page is built from a <b>template</b> filled with fresh data, and the browser shows the updated table.</li>
+  </ol>
+  <div class="note"><p><b>Why this split?</b> Routes never touch the database directly and templates never contain database code. Each file does one job, so a change in one place rarely breaks another.</p></div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="files">
+  <h2><span class="num">4</span>File map: what every file is for</h2>
+  <p class="lead">Open the project folder next to this page and follow along.</p>
+
+  <div class="files">
+
+    <div class="folder"><h4>Waste-Snap/ (project root)</h4><ul>
+      <li><b>README.md</b>: quick setup steps and a demo script for humans.</li>
+      <li><b>SETUP_FOR_AI.md</b>: setup instructions written for an AI assistant on a new laptop.</li>
+      <li><b>PROJECT_GUIDE.html</b>: this page.</li>
+      <li><b>.env</b> <span class="tag t-red">private</span>: your real secrets (database URI, secret key). Never uploaded to GitHub.</li>
+      <li><b>.env.example</b>: a fill-in-the-blanks copy of <code>.env</code> that is safe to share.</li>
+      <li><b>.gitignore</b>: tells git which files to ignore (<code>.env</code>, <code>.venv</code>, uploaded photos).</li>
+      <li><b>.gitattributes</b>: keeps line endings the same on Windows and Mac.</li>
+      <li><b>frontend/</b>: an empty folder left from the original scaffold. Not used.</li>
+    </ul></div>
+
+    <div class="folder"><h4>backend/ (the heart of the project)</h4><ul>
+      <li><b>app.py</b> <span class="tag t-green">start here</span>: creates the Flask app, connects the database, plugs in all the routes, and defines the home page and the role redirect.</li>
+      <li><b>config.py</b>: reads settings from <code>.env</code>.</li>
+      <li><b>models.py</b>: the database connection and the <code>User</code> class that Flask-Login needs.</li>
+      <li><b>db_helpers.py</b>: every function that reads or writes data (create a complaint, verify, assign, create a payment...). The rules <code>DEADLINE_DAYS = 7</code> and <code>LATE_PENALTY = 50</code> are at its top.</li>
+      <li><b>requirements.txt</b>: the list of Python packages to install.</li>
+      <li><b>init_db.py</b>: run once. Creates database indexes (for example, "no two users with the same email").</li>
+      <li><b>create_admin.py, create_worker.py, create_company.py</b>: ask for a name, email and password and create that kind of account. Citizens sign up on the website instead.</li>
+      <li><b>seed_demo.py</b>: creates one demo account per role plus three sample complaints, for a quick demo.</li>
+    </ul></div>
+
+    <div class="folder"><h4>backend/routes/ (what each URL does)</h4><ul>
+      <li><b>auth.py</b>: <code>/register</code>, <code>/login</code>, <code>/logout</code>.</li>
+      <li><b>complaints.py</b>: <code>/report</code> (citizen reports an issue with a photo) and <code>/my-complaints</code>.</li>
+      <li><b>admin.py</b>: <code>/admin</code> plus verify, assign, resolve, and the payments pages.</li>
+      <li><b>workers.py</b>: <code>/worker</code> plus start work and upload the proof photo.</li>
+      <li><b>company.py</b>: <code>/company</code>, the company's payment list.</li>
+    </ul></div>
+
+    <div class="folder"><h4>backend/templates/ (the pages)</h4><ul>
+      <li><b>base.html</b>: the shared frame (navbar, flash messages, footer). Most pages build on it.</li>
+      <li><b>auth_base.html</b>: the shared split-screen layout for login and register.</li>
+      <li><b>home.html</b>: the landing page.</li>
+      <li><b>login.html, register.html</b>: the sign-in and sign-up forms.</li>
+      <li><b>dashboard.html, report_issue.html, my_complaints.html</b>: citizen pages.</li>
+      <li><b>worker_dashboard.html</b>: the worker's tasks.</li>
+      <li><b>admin_dashboard.html, admin_payments.html, admin_reviews.html</b>: admin pages (complaints, payments, low-rating reviews and the violation log).</li>
+      <li><b>company_dashboard.html</b>: the company's payments.</li>
+      <li><b>_macros.html</b>: two small reusable pieces: the coloured status badge and the labelled photo.</li>
+    </ul></div>
+
+    <div class="folder"><h4>backend/static/ (files sent as they are)</h4><ul>
+      <li><b>css/style.css</b>: your friend's design (colours, landing page, login screen).</li>
+      <li><b>css/app.css</b>: extra styling for the dashboards, tables, buttons and badges.</li>
+      <li><b>js/auth.js</b>: the show/hide password eye.</li>
+      <li><b>uploads/</b> <span class="tag t-red">not in git</span>: every uploaded photo is saved here with a random file name.</li>
+    </ul></div>
+
+  </div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="code">
+  <h2><span class="num">5</span>Code walkthrough</h2>
+  <p class="lead">The important parts of each file, in the order they run.</p>
+
+  <h3>1. Startup: <code>app.py</code></h3>
+  <p>When you run <code>python app.py</code>, this happens in order:</p>
+  <ol class="steps">
+    <li><b>Create the app</b> and load settings from <code>config.py</code>.</li>
+    <li><b>Connect to MongoDB</b> with <code>init_db_connection(app)</code>. If <code>MONGODB_URI</code> is missing, it stops with a clear message.</li>
+    <li><b>Set up Flask-Login</b>. It needs a "user loader": given the id stored in the session cookie, fetch that user from the database.</li>
+    <li><b>Register the blueprints</b> (auth, complaints, admin, workers, company), which switches on all their URLs.</li>
+    <li><b>Define three routes of its own</b>: <code>/</code> (landing page), <code>/dashboard/&lt;role&gt;</code> (send each person to the right dashboard), and <code>/db-check</code> (admin-only database test).</li>
+  </ol>
+  <pre><code>@app.route("/dashboard/&lt;role&gt;")
+@login_required
+def dashboard(role):
+    if role != current_user.role:     # a citizen cannot open /dashboard/admin
+        abort(403)
+    if role == "admin":
+        return redirect(url_for("admin.dashboard"))
+    ...</code></pre>
+
+  <h3>2. Settings: <code>config.py</code></h3>
+  <p>Reads <code>.env</code> and exposes <code>SECRET_KEY</code> (signs login cookies), <code>MONGODB_URI</code>, <code>MONGODB_DATABASE</code>, and <code>DEBUG</code>. The code never contains a password. That is why the project can safely live on GitHub.</p>
+
+  <h3>3. Connection and users: <code>models.py</code></h3>
+  <ul>
+    <li><code>init_db_connection(app)</code> creates the MongoDB client once at startup.</li>
+    <li><code>get_db()</code> gives other files the database object.</li>
+    <li><code>to_object_id(text)</code> converts the text id from a URL into a MongoDB <code>ObjectId</code>, and returns <code>None</code> if the text is not valid, so a junk URL cannot crash the app.</li>
+    <li><code>User</code> wraps a database record into an object with <code>.id</code>, <code>.name</code>, <code>.email</code>, <code>.role</code>, which is what Flask-Login expects.</li>
+  </ul>
+
+  <h3>4. The data layer: <code>db_helpers.py</code></h3>
+  <p>The main groups of functions:</p>
+  <div class="scroll"><table>
+    <tr><th>Group</th><th>Functions</th><th>What they do</th></tr>
+    <tr><td>Users</td><td><code>get_user_by_email</code>, <code>get_user_by_id</code>, <code>create_user</code>, <code>create_citizen</code></td><td>Find or create accounts. Passwords are hashed before saving.</td></tr>
+    <tr><td>Complaints (read)</td><td><code>get_complaints_by_user</code>, <code>get_all_complaints</code>, <code>get_worker_complaints</code>, <code>get_resolved_complaints_by_user</code></td><td>Fetch lists for each dashboard. The admin list also looks up the citizen's and worker's names.</td></tr>
+    <tr><td>Complaints (change)</td><td><code>create_complaint</code>, <code>verify_complaint</code>, <code>assign_complaint</code>, <code>start_work_on_complaint</code>, <code>mark_work_done</code>, <code>resolve_complaint</code></td><td>Move a complaint one step forward. Each returns <code>True</code> or <code>False</code>.</td></tr>
+    <tr><td>Companies and payments</td><td><code>get_companies</code>, <code>get_resolved_without_payment</code>, <code>create_payment</code>, <code>mark_payment_paid</code>, <code>get_payments</code></td><td>Everything for section 9.</td></tr>
+  </table></div>
+
+  <p>The key idea is in how a status change is made. Instead of "read the complaint, check it, then save it" (which can go wrong if two people click at once), it sends <b>one instruction that includes the rule</b>:</p>
+  <pre><code>def verify_complaint(complaint_id):
+    ...
+    # "find a complaint with this id AND status Submitted, set status to Verified"
+    return _move_complaint(
+        {"_id": object_id, "status": "Submitted"},
+        {"status": "Verified"}
+    )</code></pre>
+  <p>If the complaint is not <code>Submitted</code> (already verified, or the id is wrong), nothing matches and the function returns <code>False</code>. This is why a complaint can never skip a stage.</p>
+
+  <h3>5. Routes</h3>
+  <p>All routes follow one pattern: <b>check who is asking, call a helper, flash a message, redirect</b>.</p>
+  <pre><code>@admin_bp.route("/admin/verify/&lt;complaint_id&gt;", methods=["POST"])
+@login_required
+def verify(complaint_id):
+    if current_user.role != "admin":      # role check
+        abort(403)
+    if verify_complaint(complaint_id):    # ask db_helpers
+        flash("Complaint verified successfully!", "success")
+    else:
+        flash("Complaint not found or already processed.", "warning")
+    return redirect(url_for("admin.dashboard"))</code></pre>
+
+  <div class="scroll"><table>
+    <tr><th>URL</th><th>Who</th><th>What happens</th></tr>
+    <tr><td><code>/</code></td><td>anyone</td><td>Landing page</td></tr>
+    <tr><td><code>/register</code>, <code>/login</code></td><td>anyone</td><td>Sign up (always as a citizen) and sign in</td></tr>
+    <tr><td><code>/logout</code> (POST)</td><td>logged in</td><td>Ends the session</td></tr>
+    <tr><td><code>/dashboard/&lt;role&gt;</code></td><td>logged in</td><td>Sends you to your own dashboard</td></tr>
+    <tr><td><code>/report</code>, <code>/my-complaints</code></td><td>citizen</td><td>Report an issue and list your reports</td></tr>
+    <tr><td><code>/admin</code> and <code>/admin/verify|assign|resolve/&lt;id&gt;</code></td><td>admin</td><td>Manage complaints</td></tr>
+    <tr><td><code>/admin/payments</code> and <code>/admin/payments/create|pay/&lt;id&gt;</code></td><td>admin</td><td>Create and settle payments</td></tr>
+    <tr><td><code>/admin/reject/&lt;id&gt;</code></td><td>admin</td><td>Reject an invalid or duplicate complaint</td></tr>
+    <tr><td><code>/admin/reviews</code> and <code>/admin/reviews/&lt;id&gt;/decide</code></td><td>admin</td><td>Low-rating reviews and the violation log</td></tr>
+    <tr><td><code>/complaints/&lt;id&gt;/feedback</code> and <code>/complaints/&lt;id&gt;/reopen</code></td><td>citizen</td><td>Rate a resolved complaint, or reopen it</td></tr>
+    <tr><td><code>/worker</code> and <code>/worker/start|done/&lt;id&gt;</code></td><td>worker</td><td>Start work, upload the proof photo</td></tr>
+    <tr><td><code>/company</code></td><td>company</td><td>See your payments</td></tr>
+    <tr><td><code>/db-check</code></td><td>admin</td><td>Test the database connection</td></tr>
+  </table></div>
+
+  <h3>6. Templates and the shared frame</h3>
+  <p>Pages do not repeat the navbar and footer. Each page says "I build on <code>base.html</code>" and fills one empty slot:</p>
+
+  <figure>
+    <svg viewBox="0 0 900 330" role="img" aria-label="How templates extend base.html">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+      <rect class="cont" x="20" y="14" width="400" height="300" rx="14"/>
+      <text class="t" x="40" y="40">base.html (the frame)</text>
+      <rect class="g" x="40" y="54" width="360" height="52" rx="8"/>
+      <text class="t" x="220" y="78" text-anchor="middle">Navbar</text>
+      <text class="s" x="220" y="96" text-anchor="middle">links change by role; Logout button</text>
+      <rect class="a" x="40" y="116" width="360" height="40" rx="8"/>
+      <text class="t" x="220" y="141" text-anchor="middle">Flash messages</text>
+      <rect class="b" x="40" y="166" width="360" height="86" rx="8" stroke-dasharray="6 4"/>
+      <text class="t" x="220" y="200" text-anchor="middle">{% block content %}</text>
+      <text class="s" x="220" y="222" text-anchor="middle">an empty slot each page fills in</text>
+      <rect class="g" x="40" y="262" width="360" height="40" rx="8"/>
+      <text class="t" x="220" y="287" text-anchor="middle">Footer</text>
+
+      <rect class="p" x="520" y="60" width="360" height="90" rx="12"/>
+      <text class="t" x="700" y="90" text-anchor="middle">admin_dashboard.html</text>
+      <text class="m" x="700" y="112" text-anchor="middle">{% extends "base.html" %}</text>
+      <text class="s" x="700" y="132" text-anchor="middle">only writes the table of complaints</text>
+
+      <rect class="p" x="520" y="190" width="360" height="90" rx="12"/>
+      <text class="t" x="700" y="220" text-anchor="middle">my_complaints.html</text>
+      <text class="m" x="700" y="242" text-anchor="middle">{% extends "base.html" %}</text>
+      <text class="s" x="700" y="262" text-anchor="middle">only writes the list of cards</text>
+
+      <path class="ar" d="M520 105H402" marker-end="url(#ah)"/>
+      <path class="ar" d="M520 235 C470 235 470 215 402 210" marker-end="url(#ah)"/>
+    </svg>
+    <figcaption>Change the navbar once in base.html and every page updates.</figcaption>
+  </figure>
+
+  <p>Inside a template, <code>{{ ... }}</code> prints a value, and <code>{% ... %}</code> is logic (<code>if</code>, <code>for</code>). For example, the admin table shows a different button depending on the complaint's status:</p>
+  <pre><code>{% if complaint.status == "Submitted" %}
+    &lt;button&gt;Verify&lt;/button&gt;
+{% elif complaint.status == "Verified" %}
+    ... a worker drop-down and an Assign button ...
+{% endif %}</code></pre>
+  <p>The login and register pages use <code>auth_base.html</code> instead, because they have the split-screen layout without the navbar.</p>
+
+  <h3>7. Photo uploads</h3>
+  <ol class="steps">
+    <li>The form uses <code>enctype="multipart/form-data"</code> so the browser can send a file.</li>
+    <li>The route checks the file is present and is a <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code> or <code>.webp</code> (<code>secure_filename</code> cleans the name).</li>
+    <li>The file is saved in <code>static/uploads/</code> under a random name (<code>uuid4().hex</code> plus the extension), so two uploads can never clash and a user cannot choose a dangerous file name.</li>
+    <li>Only the <b>file name</b> goes into the database. Pages show it with <code>&lt;img src="/static/uploads/NAME"&gt;</code>.</li>
+    <li>If the database update fails after a worker uploaded a proof photo, the file is deleted again, so no orphan photos are left behind.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="data">
+  <h2><span class="num">6</span>The database</h2>
+  <p class="lead">MongoDB stores <b>documents</b> (like small JSON objects) in <b>collections</b> (like folders of documents). WasteSnap has three collections.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 640" role="img" aria-label="Collections users, complaints and payments and how they link">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+
+      <rect class="g" x="20" y="70" width="230" height="250" rx="12"/>
+      <rect class="a" x="20" y="350" width="230" height="140" rx="12"/>
+      <text class="t" x="40" y="376">violations</text>
+      <text class="s" x="40" y="402">user_id, kind, complaint_id</text>
+      <text class="s" x="40" y="424">note, created_at</text>
+      <text class="s" x="40" y="450">kinds: invalid_complaint,</text>
+      <text class="s" x="40" y="468">duplicate_photo, reopened,</text>
+      <text class="s" x="40" y="486">low_rating_penalty</text>
+      <text class="t" x="40" y="96">users</text>
+      <text class="s" x="40" y="124">_id  (auto, unique)</text>
+      <text class="s" x="40" y="146">name</text>
+      <text class="s" x="40" y="168">email  (unique)</text>
+      <text class="s" x="40" y="190">password_hash</text>
+      <text class="s" x="40" y="212">role: citizen | worker</text>
+      <text class="s" x="40" y="230">      | admin | company</text>
+      <text class="s" x="40" y="252">created_at</text>
+
+      <rect class="b" x="330" y="70" width="270" height="540" rx="12"/>
+      <text class="t" x="350" y="96">complaints</text>
+      <text class="s" x="350" y="124">_id</text>
+      <text class="s" x="350" y="146">user_id  (the citizen)</text>
+      <text class="s" x="350" y="168">type, description, location</text>
+      <text class="s" x="350" y="190">image_filename</text>
+      <text class="s" x="350" y="212">status</text>
+      <text class="s" x="350" y="234">assigned_worker_id</text>
+      <text class="s" x="350" y="256">worker_done  (true / false)</text>
+      <text class="s" x="350" y="278">resolution_image_filename</text>
+      <text class="s" x="350" y="300">days_existing  (entered by citizen)</text>
+      <text class="s" x="350" y="322">assigned_at, deadline  (+7 days)</text>
+      <text class="s" x="350" y="344">worker_done_at, was_late</text>
+      <text class="s" x="350" y="366">resolved_at</text>
+      <text class="s" x="350" y="388">feedback_rating (1-5)</text>
+      <text class="s" x="350" y="410">feedback_comment, feedback_at</text>
+      <text class="s" x="350" y="432">rating_penalty (pending / approved</text>
+      <text class="s" x="350" y="454">     / dismissed)</text>
+      <text class="s" x="350" y="476">reopened, reopen_reason</text>
+      <text class="s" x="350" y="498">image_hash, resolution_image_hash</text>
+      <text class="s" x="350" y="520">possible_duplicate_of, location_key</text>
+      <text class="s" x="350" y="542">rejected_reason, rejected_note</text>
+      <text class="s" x="350" y="564">created_at, updated_at</text>
+
+      <rect class="p" x="680" y="70" width="200" height="310" rx="12"/>
+      <text class="t" x="700" y="96">payments</text>
+      <text class="s" x="700" y="124">_id</text>
+      <text class="s" x="700" y="146">complaint_id (unique)</text>
+      <text class="s" x="700" y="168">company_id</text>
+      <text class="s" x="700" y="190">worker_id</text>
+      <text class="s" x="700" y="212">amount</text>
+      <text class="s" x="700" y="234">penalty  (₹50 if late)</text>
+      <text class="s" x="700" y="256">net_amount  (after penalty)</text>
+      <text class="s" x="700" y="278">status: pending | paid | on_hold</text>
+      <text class="s" x="700" y="300">reference  PAY-…</text>
+      <text class="s" x="700" y="322">created_at, paid_at</text>
+
+      <path class="ar" d="M330 146H250" marker-end="url(#ah)"/>
+      <path class="ar" d="M330 234 C290 234 290 206 252 206" marker-end="url(#ah)"/>
+      <path class="ar" d="M680 146H602" marker-end="url(#ah)"/>
+      <path class="ar" d="M780 70 C780 20 135 20 135 70" marker-end="url(#ah)"/>
+      <text class="s" x="290" y="138" text-anchor="middle">user_id</text>
+      <text class="s" x="268" y="262" text-anchor="middle">assigned_worker_id</text>
+      <text class="s" x="640" y="138" text-anchor="middle">complaint_id</text>
+      <text class="s" x="457" y="36" text-anchor="middle">company_id and worker_id</text>
+    </svg>
+    <figcaption>An arrow means "stores the _id of a document in that collection". It is how MongoDB documents point at each other.</figcaption>
+  </figure>
+
+  <ul>
+    <li><b>One users collection for everyone.</b> The <code>role</code> field decides what a person can do.</li>
+    <li><b>Photos are not in the database.</b> Only file names are stored. The pictures live in <code>static/uploads/</code>.</li>
+    <li><b>A fourth collection, <code>violations</code></b>, is a log of strikes and warnings, written by <code>log_violation()</code> and read on the admin's Reviews page.</li>
+    <li><b>Indexes</b> (created by <code>init_db.py</code>): <code>users.email</code> is unique (no duplicate accounts), and <code>payments.complaint_id</code> is unique (one complaint can be paid only once).</li>
+    <li><b>ObjectId</b>: MongoDB's auto-generated id, a 24-character string like <code>65f1c2...</code>. Pages show only the last 6 characters (<code>#e8d914</code>) to keep them short.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="lifecycle">
+  <h2><span class="num">7</span>The complaint lifecycle</h2>
+  <p class="lead">The core of the project: a complaint moves through five stages, and each move can only be made by the right person.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 230" role="img" aria-label="Complaint status flow">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+
+      <rect class="n" x="10" y="60" width="150" height="62" rx="31"/>
+      <text class="t" x="85" y="88" text-anchor="middle">Submitted</text>
+      <text class="s" x="85" y="106" text-anchor="middle">by the Citizen</text>
+
+      <rect class="b" x="190" y="60" width="150" height="62" rx="31"/>
+      <text class="t" x="265" y="88" text-anchor="middle">Verified</text>
+      <text class="s" x="265" y="106" text-anchor="middle">by the Admin</text>
+
+      <rect class="p" x="370" y="60" width="150" height="62" rx="31"/>
+      <text class="t" x="445" y="88" text-anchor="middle">Assigned</text>
+      <text class="s" x="445" y="106" text-anchor="middle">Admin picks a worker</text>
+
+      <rect class="a" x="550" y="60" width="150" height="62" rx="31"/>
+      <text class="t" x="625" y="88" text-anchor="middle">In Progress</text>
+      <text class="s" x="625" y="106" text-anchor="middle">Worker starts</text>
+
+      <rect class="g" x="730" y="60" width="160" height="62" rx="31"/>
+      <text class="t" x="810" y="88" text-anchor="middle">Resolved</text>
+      <text class="s" x="810" y="106" text-anchor="middle">Admin confirms</text>
+
+      <path class="ar" d="M160 91H190" marker-end="url(#ah)"/>
+      <path class="ar" d="M340 91H370" marker-end="url(#ah)"/>
+      <path class="ar" d="M520 91H550" marker-end="url(#ah)"/>
+      <path class="ar" d="M700 91H730" marker-end="url(#ah)"/>
+
+      <rect class="a" x="505" y="150" width="240" height="58" rx="10" stroke-dasharray="6 4"/>
+      <text class="m" x="625" y="174" text-anchor="middle">While In Progress, the worker uploads</text>
+      <text class="m" x="625" y="192" text-anchor="middle">the "fixed" photo → worker_done = true</text>
+      <path class="ar dash" d="M625 150V124" marker-end="url(#ah)"/>
+    </svg>
+    <figcaption>The admin can press Resolve only after the worker's photo is uploaded.</figcaption>
+  </figure>
+
+  <div class="scroll"><table>
+    <tr><th>Step</th><th>Who</th><th>Button</th><th>Rule enforced in the database</th></tr>
+    <tr><td>Submit</td><td>Citizen</td><td>Report an issue</td><td>A photo is required.</td></tr>
+    <tr><td>Verify</td><td>Admin</td><td>Verify</td><td>Complaint must be <code>Submitted</code>.</td></tr>
+    <tr><td>Assign</td><td>Admin</td><td>Assign</td><td>Must be <code>Verified</code>; the chosen user must be a worker.</td></tr>
+    <tr><td>Start work</td><td>Worker</td><td>Start work</td><td>Must be <code>Assigned</code> <b>to this worker</b>.</td></tr>
+    <tr><td>Finish</td><td>Worker</td><td>Upload photo and mark done</td><td>Must be <code>In Progress</code>, assigned to this worker, not already done, photo present.</td></tr>
+    <tr><td>Resolve</td><td>Admin</td><td>Resolve</td><td>Must be <code>In Progress</code> with <code>worker_done</code> true and a proof photo.</td></tr>
+  </table></div>
+
+  <h3>Deadlines, ratings and the days counter</h3>
+  <div class="grid">
+    <div class="card"><h4><span class="tag t-amber">Worker deadline</span></h4>
+      <p>When the admin assigns a complaint, <code>deadline</code> is set to 7 days later. Dashboards show "N days left" or "Overdue". If the worker uploads the proof photo after the deadline, <code>was_late</code> becomes true.</p></div>
+    <div class="card"><h4><span class="tag t-red">₹50 penalty</span></h4>
+      <p>When the admin creates the payment for a late job, ₹50 is taken off: <code>net_amount = amount - 50</code>. The admin sees the warning first, and the company sees the deduction.</p></div>
+    <div class="card"><h4><span class="tag t-green">Rating</span></h4>
+      <p>After a complaint is Resolved, its citizen can give 1 to 5 stars and an optional comment, <b>once</b>. The database update only matches if no rating exists yet, so a second try is refused.</p></div>
+    <div class="card"><h4><span class="tag t-blue">Days existing</span></h4>
+      <p>The citizen enters the days already passed. Each time a page loads, the app adds the days since the report was created, so the number rises by one daily. It stops at the resolved date.</p></div>
+  </div>
+  <pre><code># db_helpers.py: the counter is worked out on the fly, not stored
+existing_days = days_existing + (end_time.date() - created_at.date()).days</code></pre>
+
+  <h3>Rules that keep the system fair</h3>
+  <p>Beyond the deadline and the ₹50 penalty, there are rules for every role. Each is a small function in <code>db_helpers.py</code>, with the numbers kept as constants at the top of that file.</p>
+  <div class="scroll"><table>
+    <tr><th>Rule</th><th>Applies to</th><th>What happens</th></tr>
+    <tr><td>Low-rating penalty review</td><td>Worker (admin decides)</td><td>A 1-2 star rating creates a <b>pending review</b>. It does not cut pay by itself. The admin sees the comment and the worker's timing and clicks <b>Approve</b> (₹25 off the job's payment) or <b>Dismiss</b>. The payment cannot be paid while a review is pending.</td></tr>
+    <tr><td>Not started in time</td><td>Worker</td><td>Still "Assigned" after 48 hours: a warning appears for the worker and the admin. No money.</td></tr>
+    <tr><td>Duplicate proof photo</td><td>Worker</td><td>Each photo is fingerprinted (SHA-256). A proof photo that matches the citizen's photo, another job's proof, or an old rejected proof is refused and logged.</td></tr>
+    <tr><td>Reject the worker's work</td><td>Admin and worker</td><td>When a job is marked done, the admin can <b>Resolve</b> or <b>Reject work</b> with a reason. It goes back to the same worker with a new 3-day deadline, the rejected photo is blocked from re-upload, and it is logged against the worker. A job that was already late stays late.</td></tr>
+    <tr><td>Reopen a complaint</td><td>Citizen and worker</td><td>Within 3 days, once, before rating, and before the payment is paid: back to <code>In Progress</code> with a new 3-day deadline. The payment goes <code>on_hold</code> and the reopen is logged against the worker.</td></tr>
+    <tr><td>Invalid or fake complaint</td><td>Citizen</td><td>The admin rejects it. <b>Invalid</b> gives a strike; <b>duplicate</b> does not. 3 strikes in 90 days pause reporting.</td></tr>
+    <tr><td>Duplicate report</td><td>Citizen</td><td>Same type and place within 7 days: refused for the same citizen; flagged for the admin if it was someone else's.</td></tr>
+    <tr><td>Daily limit</td><td>Citizen</td><td>5 reports per day.</td></tr>
+    <tr><td>Admin response time</td><td>Admin</td><td>A complaint still "Submitted" after 48 hours turns red. An alert only.</td></tr>
+  </table></div>
+  <div class="note"><p><b>Why the admin has the final say on ratings:</b> a citizen can give 1 star for no good reason. Automatic pay cuts would then punish a worker who did everything right. The review step puts a human between the rating and the money.</p></div>
+  <p>Every strike and violation is saved in a <code>violations</code> collection, shown on the admin's <b>Reviews</b> page.</p>
+
+  <h3>Who can see what</h3>
+  <div class="scroll"><table>
+    <tr><th>Page</th><th>Citizen</th><th>Worker</th><th>Admin</th><th>Company</th></tr>
+    <tr><td>Report an issue, My complaints</td><td class="yes">✔</td><td class="no">403</td><td class="no">403</td><td class="no">403</td></tr>
+    <tr><td>Worker tasks</td><td class="no">403</td><td class="yes">✔</td><td class="no">403</td><td class="no">403</td></tr>
+    <tr><td>Admin complaints and payments</td><td class="no">403</td><td class="no">403</td><td class="yes">✔</td><td class="no">403</td></tr>
+    <tr><td>Company payments</td><td class="no">403</td><td class="no">403</td><td class="no">403</td><td class="yes">✔</td></tr>
+  </table></div>
+  <p>A <b>403 Forbidden</b> means "you are logged in, but this page is not for your role". The check is made on the <b>server</b> for every request, so hiding a link is never the only protection.</p>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="auth">
+  <h2><span class="num">8</span>Login and security basics</h2>
+  <p class="lead">What happens when someone signs in, and why the passwords are safe.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 400" role="img" aria-label="Login sequence">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+
+      <rect class="g" x="45" y="12" width="130" height="34" rx="8"/><text class="t" x="110" y="34" text-anchor="middle">Browser</text>
+      <rect class="b" x="275" y="12" width="130" height="34" rx="8"/><text class="t" x="340" y="34" text-anchor="middle">auth.py</text>
+      <rect class="a" x="505" y="12" width="130" height="34" rx="8"/><text class="t" x="570" y="34" text-anchor="middle">db_helpers.py</text>
+      <rect class="r" x="735" y="12" width="130" height="34" rx="8"/><text class="t" x="800" y="34" text-anchor="middle">MongoDB</text>
+      <line class="life" x1="110" y1="46" x2="110" y2="390"/>
+      <line class="life" x1="340" y1="46" x2="340" y2="390"/>
+      <line class="life" x1="570" y1="46" x2="570" y2="390"/>
+      <line class="life" x1="800" y1="46" x2="800" y2="390"/>
+
+      <path class="ar" d="M110 80H338" marker-end="url(#ah)"/>
+      <text class="m" x="224" y="72" text-anchor="middle">1  POST /login (email, password)</text>
+
+      <path class="ar" d="M340 120H568" marker-end="url(#ah)"/>
+      <text class="m" x="454" y="112" text-anchor="middle">2  get_user_by_email(email)</text>
+
+      <path class="ar" d="M570 160H798" marker-end="url(#ah)"/>
+      <text class="m" x="684" y="152" text-anchor="middle">3  users.find_one(email)</text>
+
+      <path class="ar dash" d="M800 200H572" marker-end="url(#ah)"/>
+      <text class="m" x="686" y="192" text-anchor="middle">4  the user's record</text>
+
+      <path class="ar dash" d="M570 240H342" marker-end="url(#ah)"/>
+      <text class="m" x="456" y="232" text-anchor="middle">5  a User object</text>
+
+      <rect class="b" x="355" y="262" width="300" height="42" rx="8"/>
+      <text class="m" x="505" y="280" text-anchor="middle">6  check_password_hash(...) matches?</text>
+      <text class="m" x="505" y="296" text-anchor="middle">then login_user(user) creates the session</text>
+
+      <path class="ar dash" d="M340 345H112" marker-end="url(#ah)"/>
+      <text class="m" x="226" y="337" text-anchor="middle">7  redirect to your dashboard + cookie</text>
+      <text class="s" x="226" y="368" text-anchor="middle">(wrong password: "Invalid email or password")</text>
+    </svg>
+    <figcaption>After step 7 the browser sends the cookie with every request, so Flask knows who you are.</figcaption>
+  </figure>
+
+  <div class="grid">
+    <div class="card"><h4>Password hashing</h4><p><code>generate_password_hash("secret123")</code> turns the password into a long scrambled string. Only that is stored. Even someone with database access cannot read the original password. Login re-scrambles what you typed and compares.</p></div>
+    <div class="card"><h4>Sessions</h4><p>After login, Flask-Login puts your user id in a cookie signed with <code>SECRET_KEY</code>. Nobody can forge it without the key.</p></div>
+    <div class="card"><h4>Role checks</h4><p>Every protected route starts with <code>@login_required</code> and a check like <code>if current_user.role != "admin": abort(403)</code>.</p></div>
+    <div class="card"><h4>Secrets stay out of git</h4><p><code>.env</code> is in <code>.gitignore</code>. Only <code>.env.example</code> (with placeholders) is committed.</p></div>
+    <div class="card"><h4>Safe sign-up</h4><p>Anyone who registers is always a <b>citizen</b>. Admin, worker and company accounts can only be created by running the create scripts on the computer.</p></div>
+    <div class="card"><h4>Logout is a POST</h4><p>It is a button inside a form, not a plain link, so another website cannot log you out by loading an image.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="payments">
+  <h2><span class="num">9</span>Companies and payments</h2>
+  <p class="lead">After a complaint is resolved, the admin pays a company for the work. It is simulated: a payment is just a record with a status.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 190" role="img" aria-label="Payment flow">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+      <rect class="g" x="10" y="50" width="190" height="80" rx="12"/>
+      <text class="t" x="105" y="80" text-anchor="middle">Complaint is</text>
+      <text class="t" x="105" y="98" text-anchor="middle">Resolved</text>
+      <text class="s" x="105" y="118" text-anchor="middle">no payment yet</text>
+
+      <rect class="a" x="250" y="50" width="190" height="80" rx="12"/>
+      <text class="t" x="345" y="80" text-anchor="middle">Payment: pending</text>
+      <text class="s" x="345" y="100" text-anchor="middle">Admin picks a company</text>
+      <text class="s" x="345" y="116" text-anchor="middle">and an amount (₹)</text>
+
+      <rect class="b" x="490" y="50" width="190" height="80" rx="12"/>
+      <text class="t" x="585" y="80" text-anchor="middle">Payment: paid</text>
+      <text class="s" x="585" y="100" text-anchor="middle">Admin clicks</text>
+      <text class="s" x="585" y="116" text-anchor="middle">"Mark as paid"</text>
+
+      <rect class="p" x="730" y="50" width="160" height="80" rx="12"/>
+      <text class="t" x="810" y="80" text-anchor="middle">Company sees it</text>
+      <text class="s" x="810" y="100" text-anchor="middle">pending and paid</text>
+      <text class="s" x="810" y="116" text-anchor="middle">totals on its page</text>
+
+      <path class="ar" d="M200 90H250" marker-end="url(#ah)"/>
+      <path class="ar" d="M440 90H490" marker-end="url(#ah)"/>
+      <path class="ar" d="M680 90H730" marker-end="url(#ah)"/>
+    </svg>
+    <figcaption>Each payment gets a reference such as <code>PAY-20261011-A3F2</code>.</figcaption>
+  </figure>
+
+  <ul>
+    <li><b>Only resolved complaints</b> can be paid, and <b>only once</b>: the unique index on <code>complaint_id</code> rejects a second payment.</li>
+    <li>The amount must be above 0 and at most 1,000,000. It is read with Python's <code>Decimal</code> so values like <code>1500.50</code> are handled exactly.</li>
+    <li>A company only sees <b>its own</b> payments. The admin alone can mark one as paid.</li>
+    <li>The payment also stores the worker who did the job (<code>worker_id</code>), taken from the complaint.</li>
+    <li><b>Late penalty:</b> if the worker finished after the 7-day deadline, ₹50 is deducted. The payment keeps the full <code>amount</code>, the <code>penalty</code> and the <code>net_amount</code> the company receives. The amount must be more than the penalty.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="journey">
+  <h2><span class="num">10</span>What we did, end to end</h2>
+  <p class="lead">The project started as two separate versions and was combined into one.</p>
+
+  <div class="grid">
+    <div class="card"><h4><span class="tag t-blue">Your version</span></h4>
+      <p>A solid backend: real login sessions, roles, the five-stage workflow, proof photos. But it used MySQL, had a very plain Bootstrap look, and no company features.</p></div>
+    <div class="card"><h4><span class="tag t-purple">Friend's version</span></h4>
+      <p>A beautiful front end (landing page, login screens) and a MongoDB database. But login only lived in the browser, anyone could call the API to delete complaints, and there was no real workflow.</p></div>
+    <div class="card"><h4><span class="tag t-green">Combined</span></h4>
+      <p>Your secure backend and workflow, the friend's design and MongoDB, and the new company and payments feature.</p></div>
+  </div>
+
+  <h3>The steps</h3>
+  <ol class="steps">
+    <li><b>Compared the two versions</b> feature by feature: stack, security, workflow, data model, user interface.</li>
+    <li><b>Chose the approach.</b> Keep Flask with server-side pages and sessions (not a JSON API), use MongoDB Atlas, keep the five-stage workflow, add company payments (Option B: the admin pays a company for resolved work).</li>
+    <li><b>Phase 1, the database.</b> Replaced MySQL/SQLAlchemy with pymongo. Kept the same function and field names so the routes and templates barely changed. Moved settings to <code>.env</code>. Made status changes single conditional updates.</li>
+    <li><b>Phase 2, the front end.</b> Copied the friend's stylesheet, turned the landing page and login/register screens into Jinja templates, built the shared <code>base.html</code>, and redesigned the four dashboards to match.</li>
+    <li><b>Phase 3, company and payments.</b> Added the <code>company</code> role, the payments collection, the admin payments page, and the company dashboard.</li>
+    <li><b>Phase 4, polish.</b> Demo data script, README, AI setup file, line-ending settings, one password rule (8+ characters), an admin-only <code>/db-check</code>, and debug mode controlled from <code>.env</code>.</li>
+    <li><b>Second round of features.</b> Added the worker deadline (7 days) with a ₹50 penalty on the payment, citizen ratings and feedback, and the "days existing" counter.</li>
+    <li><b>Third round: rules and fairness.</b> Low-rating penalty with an admin review, not-started warnings, duplicate proof-photo detection, invalid-complaint strikes, duplicate-report and daily-limit checks, reopening, and an admin response-time alert. All covered by an automated test of more than 100 checks.</li>
+    <li><b>Tested</b> the whole flow with an automated script against a fake in-memory MongoDB (30 checks), looked at the pages in a browser, then you ran it yourself and pushed it to GitHub.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="run">
+  <h2><span class="num">11</span>Running it</h2>
+  <p class="lead">The short version. The README has the full steps for Mac and Windows.</p>
+  <pre><code>python -m venv .venv            # once
+(activate the venv)             # every new terminal
+pip install -r backend/requirements.txt    # once
+cp .env.example .env            # once, then fill it in
+cd backend
+python init_db.py               # once per database
+python seed_demo.py             # once, creates the demo accounts
+python app.py                   # start the website</code></pre>
+  <p>Open <code>http://127.0.0.1:5000/</code>. Demo logins (password <code>Demo@1234</code>): <code>admin@</code>, <code>worker@</code>, <code>company@</code>, <code>citizen@</code> followed by <code>wastesnap.test</code>.</p>
+
+  <h3>Try it yourself: trace one click</h3>
+  <p>The best way to learn the code is to follow a single action through it. Do this:</p>
+  <ol class="steps">
+    <li>Log in as the admin and press <b>Verify</b> on a complaint.</li>
+    <li>Open <code>templates/admin_dashboard.html</code> and find the Verify form. See which URL it posts to.</li>
+    <li>Find that URL in <code>routes/admin.py</code> (the <code>verify</code> function).</li>
+    <li>Follow the call into <code>db_helpers.py</code> (<code>verify_complaint</code> then <code>_move_complaint</code>).</li>
+    <li>Look at the complaint in MongoDB Atlas (Browse Collections) and see the status change.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="limits">
+  <h2><span class="num">12</span>Limits and ideas for next steps</h2>
+  <p class="lead">Being honest about the limits is part of a good demo.</p>
+
+  <div class="grid">
+    <div class="card"><h4><span class="tag t-amber">Limitation</span> Photos</h4><p>They are saved on the computer that ran the upload. Another laptop shares the database but does not have the image files.</p></div>
+    <div class="card"><h4><span class="tag t-amber">Limitation</span> No CSRF protection</h4><p>A real site adds hidden tokens to every form (Flask-WTF) so other sites cannot trick a logged-in user into submitting one.</p></div>
+    <div class="card"><h4><span class="tag t-amber">Limitation</span> Simulated payments</h4><p>No payment gateway. Payments are just records. The ₹50 penalty is taken off the job's payment, since workers do not have a separate salary in this demo.</p></div>
+    <div class="card"><h4><span class="tag t-amber">Limitation</span> No password reset</h4><p>Or email verification, or rate limiting on login.</p></div>
+  </div>
+
+  <p><b>Easy ideas to extend it:</b></p>
+  <ul>
+    <li>Store photos in cloud storage (for example Cloudinary or S3) so all laptops see them.</li>
+    <li>Add a map or GPS location instead of typing the address.</li>
+    <li>Let the admin reject a complaint with a reason.</li>
+    <li>Add charts on the admin page (complaints per week, average time to resolve).</li>
+    <li>Send an email when a complaint is resolved.</li>
+    <li>Add pagination when the lists get long.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="glossary">
+  <h2><span class="num">13</span>Glossary</h2>
+  <div class="scroll"><table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>Route</td><td>A URL paired with the Python function that handles it.</td></tr>
+    <tr><td>Blueprint</td><td>A group of related routes kept in their own file.</td></tr>
+    <tr><td>Template</td><td>An HTML file with placeholders that Flask fills in.</td></tr>
+    <tr><td>Session / cookie</td><td>A small piece of data the browser stores and sends back so the server remembers who you are.</td></tr>
+    <tr><td>Hash</td><td>A one-way scramble of a password. It cannot be turned back into the password.</td></tr>
+    <tr><td>Collection / document</td><td>MongoDB's version of a table / a row.</td></tr>
+    <tr><td>ObjectId</td><td>The unique id MongoDB gives to every document.</td></tr>
+    <tr><td>Index</td><td>A database setting that speeds up searches and can enforce rules such as "must be unique".</td></tr>
+    <tr><td>Atlas</td><td>MongoDB's cloud hosting service.</td></tr>
+    <tr><td>.env</td><td>A private file of settings and secrets that is never committed to git.</td></tr>
+    <tr><td>Virtual environment (.venv)</td><td>A private folder of Python packages for one project.</td></tr>
+    <tr><td>Flash message</td><td>A one-time message ("Complaint verified!") shown on the next page.</td></tr>
+    <tr><td>Redirect</td><td>Telling the browser to go to a different URL.</td></tr>
+    <tr><td>403 Forbidden</td><td>"You are logged in, but not allowed to see this."</td></tr>
+    <tr><td>CRUD</td><td>Create, Read, Update, Delete: the four basic things you do with data.</td></tr>
+  </table></div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">WasteSnap project guide. Open this file in any browser; it works offline.</div>
+</footer>
+
+</body>
+</html>

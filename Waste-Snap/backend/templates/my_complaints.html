@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, photo, stars, age_chip %}
+
+{% block title %}My Complaints | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>My complaints</h1>
+            <p>Follow each report from submission to resolution.</p>
+        </div>
+
+        <a href="{{ url_for('complaints.report_issue') }}" class="btn">
+            <i class="fa-solid fa-camera"></i> Report new issue
+        </a>
+    </div>
+
+    {% for complaint in complaints %}
+
+        <div class="card" id="c-{{ complaint.id }}">
+
+            <div class="complaint-head">
+                <h3>{{ complaint.type }} <span class="muted">· #{{ complaint.id[-6:] }}</span></h3>
+                {{ status_badge(complaint.status) }}
+            </div>
+
+            <p>{{ complaint.description }}</p>
+
+            <div class="chips">
+                {{ age_chip(complaint.existing_days) }}
+
+                {% if complaint.possible_duplicate_of %}
+                    <span class="chip chip-blue">
+                        <i class="fa-regular fa-copy"></i> Similar to an earlier report
+                    </span>
+                {% endif %}
+
+                {% if complaint.reopened and complaint.status != "Resolved" %}
+                    <span class="chip chip-purple">
+                        <i class="fa-solid fa-rotate-left"></i> Reopened, back with the worker
+                    </span>
+                {% endif %}
+            </div>
+
+            {% if complaint.status == "Rejected" %}
+                <div class="flash flash-danger" style="margin:10px 0 0">
+                    <strong>Rejected as {{ 'invalid' if complaint.rejected_reason == 'invalid' else 'a duplicate' }}.</strong>
+                    {% if complaint.rejected_note %}{{ complaint.rejected_note }}.{% endif %}
+                    {% if complaint.rejected_reason == 'invalid' %}
+                        This counts as a strike.
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="complaint-meta">
+                <span><strong>Location:</strong> {{ complaint.location }}</span>
+                <span><strong>Submitted:</strong> {{ complaint.created_at.strftime('%d %b %Y') }}</span>
+            </div>
+
+            <div class="photo-row">
+                {{ photo(complaint.image_filename, "Reported") }}
+                {{ photo(complaint.resolution_image_filename if complaint.status == "Resolved" else None, "After cleanup") }}
+            </div>
+
+            {% if complaint.can_reopen %}
+                <details class="reject" style="margin-top:14px">
+                    <summary class="btn btn-light btn-small">
+                        <i class="fa-solid fa-rotate-left"></i> It is not fixed. Reopen
+                    </summary>
+                    <form
+                        action="{{ url_for('complaints.reopen', complaint_id=complaint.id) }}"
+                        method="POST"
+                    >
+                        <textarea
+                            class="field"
+                            name="reason"
+                            rows="2"
+                            maxlength="300"
+                            placeholder="What is still not fixed?"
+                            required
+                            style="width:100%"
+                        ></textarea>
+                        <button type="submit" class="btn btn-small btn-danger">Reopen this complaint</button>
+                        <p class="hint">
+                            You can reopen once, within {{ reopen_days }} days of it being resolved,
+                            and only before you rate it.
+                        </p>
+                    </form>
+                </details>
+            {% endif %}
+
+            {% if complaint.status == "Resolved" %}
+
+                <div class="feedback-box">
+
+                    {% if complaint.feedback_rating %}
+
+                        <h4>Your feedback</h4>
+                        {{ stars(complaint.feedback_rating) }}
+                        {% if complaint.feedback_comment %}
+                            <p style="margin:8px 0 0">{{ complaint.feedback_comment }}</p>
+                        {% endif %}
+
+                    {% else %}
+
+                        <h4>How did we do? Rate this cleanup</h4>
+
+                        <form
+                            action="{{ url_for('complaints.give_feedback', complaint_id=complaint.id) }}"
+                            method="POST"
+                        >
+                            <div class="rating-input">
+                                {% for value in [5, 4, 3, 2, 1] %}
+                                    <input
+                                        type="radio"
+                                        name="rating"
+                                        id="star-{{ complaint.id }}-{{ value }}"
+                                        value="{{ value }}"
+                                        required
+                                    >
+                                    <label
+                                        for="star-{{ complaint.id }}-{{ value }}"
+                                        title="{{ value }} out of 5"
+                                    >&#9733;</label>
+                                {% endfor %}
+                            </div>
+
+                            <textarea
+                                class="field"
+                                name="comment"
+                                rows="2"
+                                maxlength="500"
+                                placeholder="Optional comment"
+                                style="width:100%;margin:10px 0"
+                            ></textarea>
+
+                            <button type="submit" class="btn btn-small">Submit feedback</button>
+                            <p class="hint">You can rate a complaint only once.</p>
+                        </form>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty">You have not submitted any complaints yet.</div>
+
+    {% endfor %}
+
+</main>
+
+{% endblock %}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}WasteSnap{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+<body>
+
+<!-- =====================================================
+     NAVIGATION (shared by every page)
+     ===================================================== -->
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <a href="{{ url_for('home') }}" class="brand">
+
+            <div class="brand-icon">♻</div>
+
+            <div>
+                <span class="brand-name">WasteSnap</span>
+                <small>Cleaner Communities</small>
+            </div>
+
+        </a>
+
+        <nav class="nav-links">
+
+            {% if current_user.is_authenticated %}
+
+                {% if current_user.role == "citizen" %}
+                    <a href="{{ url_for('dashboard', role='citizen') }}">Dashboard</a>
+                    <a href="{{ url_for('complaints.report_issue') }}">Report an issue</a>
+                    <a href="{{ url_for('complaints.my_complaints') }}">My complaints</a>
+
+                {% elif current_user.role == "worker" %}
+                    <a href="{{ url_for('workers.dashboard') }}">My tasks</a>
+
+                {% elif current_user.role == "admin" %}
+                    <a href="{{ url_for('admin.dashboard') }}">Complaints</a>
+                    <a href="{{ url_for('admin.payments') }}">Payments</a>
+                    <a href="{{ url_for('admin.reviews') }}">Reviews</a>
+
+                {% elif current_user.role == "company" %}
+                    <a href="{{ url_for('company.dashboard') }}">My payments</a>
+                {% endif %}
+
+            {% else %}
+
+                <a href="{{ url_for('home') }}#home">Home</a>
+                <a href="{{ url_for('home') }}#about">About</a>
+                <a href="{{ url_for('home') }}#how-it-works">How it works</a>
+                <a href="{{ url_for('home') }}#impact">Our impact</a>
+
+            {% endif %}
+
+        </nav>
+
+        {% if current_user.is_authenticated %}
+
+            <div class="nav-user">
+
+                <span class="nav-user-name">
+                    <i class="fa-solid fa-user"></i>
+                    {{ current_user.name }}
+                    <small>{{ current_user.role | capitalize }}</small>
+                </span>
+
+                <form action="{{ url_for('auth.logout') }}" method="POST">
+                    <button type="submit" class="nav-login">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </button>
+                </form>
+
+            </div>
+
+        {% else %}
+
+            <a href="{{ url_for('auth.login') }}" class="nav-login">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Login
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</header>
+
+
+<!-- Flash messages (success / danger / warning) -->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-area">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+
+{% block content %}{% endblock %}
+
+
+<!-- =====================================================
+     FOOTER
+     ===================================================== -->
+
+<footer>
+
+    <div class="footer-container">
+
+        <div class="footer-brand">
+
+            <div class="brand">
+
+                <div class="brand-icon">♻</div>
+
+                <div>
+                    <span class="brand-name">WasteSnap</span>
+                    <small>Cleaner Communities</small>
+                </div>
+
+            </div>
+
+            <p>
+                Community powered reporting for cleaner,
+                healthier neighbourhoods.
+            </p>
+
+        </div>
+
+        <div class="footer-links">
+
+            <a href="{{ url_for('home') }}#home">Home</a>
+            <a href="{{ url_for('home') }}#about">About</a>
+            <a href="{{ url_for('home') }}#how-it-works">How it works</a>
+            <a href="{{ url_for('home') }}#impact">Our impact</a>
+
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <span>© 2026 WasteSnap. All rights reserved.</span>
+        <span>Community powered cleaner streets.</span>
+    </div>
+
+</footer>
+
+</body>
+</html>

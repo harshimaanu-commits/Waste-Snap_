@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}WasteSnap{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+<!-- Shared layout for the login and register pages -->
+
+<body class="auth-page">
+
+    <!-- LEFT SIDE -->
+
+    <section class="auth-visual">
+
+        <div class="auth-visual-overlay"></div>
+
+        <div class="auth-brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-recycle"></i>
+            </div>
+
+            <span>WasteSnap</span>
+
+        </div>
+
+        <div class="auth-visual-content">
+
+            <span class="eyebrow">COMMUNITY POWERED CLEANER STREETS</span>
+
+            <h1>
+                See a problem?
+                <span>Snap it. Solve it.</span>
+            </h1>
+
+            <p>
+                Report waste problems, track their progress,
+                and help create cleaner and healthier
+                neighbourhoods.
+            </p>
+
+            <div class="auth-features">
+
+                <div class="auth-feature">
+                    <div class="feature-icon"><i class="fa-solid fa-camera"></i></div>
+                    <div>
+                        <strong>Report problems</strong>
+                        <small>Capture and report waste issues around your neighbourhood.</small>
+                    </div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="feature-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div>
+                        <strong>Track progress</strong>
+                        <small>Follow your complaint from submission to resolution.</small>
+                    </div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="feature-icon"><i class="fa-solid fa-leaf"></i></div>
+                    <div>
+                        <strong>Cleaner communities</strong>
+                        <small>Work together to make your neighbourhood cleaner.</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="auth-quote">
+            <i class="fa-solid fa-quote-left"></i>
+            <p>Every report is a small action towards a cleaner community.</p>
+        </div>
+
+    </section>
+
+
+    <!-- RIGHT SIDE -->
+
+    <section class="auth-form-section">
+
+        <div class="auth-form-wrapper">
+
+            <a href="{{ url_for('home') }}" class="back-home">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to WasteSnap
+            </a>
+
+            <div class="auth-card">
+
+                {% block card %}{% endblock %}
+
+            </div>
+
+            <p class="auth-footer">
+                © 2026 WasteSnap. Community powered cleaner streets.
+            </p>
+
+        </div>
+
+    </section>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

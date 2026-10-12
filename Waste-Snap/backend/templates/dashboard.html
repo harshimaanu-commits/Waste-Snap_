@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, age_chip %}
+
+{% block title %}Dashboard | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Hello, {{ current_user.name }}!</h1>
+            <p>Report waste problems and follow their progress.</p>
+        </div>
+
+        <a href="{{ url_for('complaints.report_issue') }}" class="btn">
+            <i class="fa-solid fa-camera"></i> Report an issue
+        </a>
+    </div>
+
+    {% if strikes > 0 %}
+        <div class="flash {{ 'flash-danger' if strikes >= strike_limit else 'flash-warning' }}">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ strikes }} of {{ strike_limit }} strikes: complaints rejected as invalid in the last {{ strike_days }} days.
+            {% if strikes >= strike_limit %}Reporting is paused until the oldest strike expires.{% endif %}
+        </div>
+    {% endif %}
+
+    <div class="stat-grid">
+        <div class="stat-tile">
+            <strong>{{ complaints | length }}</strong>
+            <span>Reports submitted</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ complaints | rejectattr('status', 'in', ['Resolved', 'Rejected']) | list | length }}</strong>
+            <span>Still open</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ complaints | selectattr('status', 'equalto', 'Resolved') | list | length }}</strong>
+            <span>Resolved</span>
+        </div>
+    </div>
+
+    {% set waiting = complaints | selectattr('status', 'equalto', 'Resolved') | rejectattr('feedback_rating') | list %}
+
+    {% if waiting %}
+        <div class="card">
+            <h2><i class="fa-solid fa-star"></i> Rate your resolved complaints</h2>
+            <p class="muted">
+                {{ waiting | length }} resolved complaint{{ '' if waiting | length == 1 else 's' }}
+                {{ 'is' if waiting | length == 1 else 'are' }} waiting for your feedback.
+            </p>
+            <div class="actions">
+                <a href="{{ url_for('complaints.my_complaints') }}" class="btn btn-small">Give feedback</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if resolved_complaints %}
+        <div class="card">
+            <h2><i class="fa-solid fa-circle-check"></i> Recently resolved</h2>
+
+            {% for complaint in resolved_complaints %}
+                <p>
+                    <strong>{{ complaint.type }}</strong>
+                    at {{ complaint.location }} has been resolved. Thank you for reporting it!
+                </p>
+            {% endfor %}
+
+            <div class="actions">
+                <a href="{{ url_for('complaints.my_complaints') }}" class="btn btn-light btn-small">View my complaints</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Your latest reports</h2>
+
+        {% for complaint in complaints[:3] %}
+            <div class="complaint-head">
+                <div>
+                    <strong>{{ complaint.type }}</strong>
+                    <div class="muted">{{ complaint.location }}</div>
+                </div>
+                <div>
+                    {{ status_badge(complaint.status) }}
+                    <div style="margin-top:6px;text-align:right">{{ age_chip(complaint.existing_days) }}</div>
+                </div>
+            </div>
+        {% else %}
+            <p class="muted">You have not reported anything yet.</p>
+        {% endfor %}
+
+        {% if complaints %}
+            <div class="actions">
+                <a href="{{ url_for('complaints.my_complaints') }}" class="btn btn-light btn-small">See all</a>
+            </div>
+        {% endif %}
+    </div>
+
+</main>
+
+{% endblock %}

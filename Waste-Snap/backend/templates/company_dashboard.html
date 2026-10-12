@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+
+{% block title %}Company Dashboard | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Hello, {{ current_user.name }}!</h1>
+            <p>Payments for the cleanup work assigned to your company.</p>
+        </div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-tile">
+            <strong>₹{{ "%.2f"|format(pending_total) }}</strong>
+            <span>Pending</span>
+        </div>
+        <div class="stat-tile">
+            <strong>₹{{ "%.2f"|format(paid_total) }}</strong>
+            <span>Paid</span>
+        </div>
+        <div class="stat-tile">
+            <strong>₹{{ "%.2f"|format(penalty_total) }}</strong>
+            <span>Late penalties deducted</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ payments | length }}</strong>
+            <span>Total jobs</span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Work</th>
+                    <th>Amount</th>
+                    <th>Penalty</th>
+                    <th>You receive</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Paid on</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for payment in payments %}
+
+                    <tr>
+                        <td>{{ payment.reference }}</td>
+                        <td>
+                            {{ payment.complaint_type }}<br>
+                            <span class="muted">#{{ payment.complaint_ref }} · {{ payment.complaint_location }}</span>
+                        </td>
+                        <td>₹{{ "%.2f"|format(payment.amount) }}</td>
+                        <td>
+                            {% if payment.penalty %}
+                                <span class="chip chip-red" title="The worker finished after the deadline">-₹{{ "%.2f"|format(payment.penalty) }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><strong>₹{{ "%.2f"|format(payment.net_amount) }}</strong></td>
+                        <td>{{ status_badge(payment.status) }}</td>
+                        <td>{{ payment.created_at.strftime('%d %b %Y') }}</td>
+                        <td>{{ payment.paid_at.strftime('%d %b %Y') if payment.paid_at else "-" }}</td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="8" class="muted" style="text-align:center">No payments yet.</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</main>
+
+{% endblock %}

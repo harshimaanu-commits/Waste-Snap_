@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, photo, stars, age_chip, deadline_chip %}
+
+{% block title %}Worker Dashboard | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>My tasks</h1>
+            <p>Complaints assigned to you by the admin.</p>
+        </div>
+    </div>
+
+    <div class="flash flash-warning">
+        <i class="fa-regular fa-clock"></i>
+        You have <strong>{{ deadline_days }} days</strong> to finish each job after it is assigned.
+        A job finished after the deadline costs <strong>₹{{ late_penalty }}</strong>,
+        which is taken off the payment for that job.
+        <ul style="margin:8px 0 0 18px" class="small">
+            <li>Start an assigned job within <strong>{{ start_hours }} hours</strong>, or a warning is shown.</li>
+            <li>A citizen rating of 1 or 2 stars can cost <strong>₹{{ rating_penalty }}</strong>, but only if the admin agrees it is a fair complaint.</li>
+            <li>The proof photo must be a new photo. Re-using a photo is refused and recorded.</li>
+            <li>If the citizen reopens a job, it comes back to you and is recorded against you.</li>
+            <li>If the admin rejects your finished work, it comes back to you for a redo, and this is recorded too.</li>
+        </ul>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-tile">
+            <strong>{{ summary.open_jobs }}</strong>
+            <span>Open jobs</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ summary.overdue_jobs }}</strong>
+            <span>Overdue now</span>
+        </div>
+        <div class="stat-tile">
+            <strong>₹{{ summary.penalty_total }}</strong>
+            <span>Penalties ({{ summary.late_jobs }} late job{{ '' if summary.late_jobs == 1 else 's' }})</span>
+        </div>
+        <div class="stat-tile">
+            <strong>
+                {% if summary.average_rating %}{{ summary.average_rating }} / 5{% else %}-{% endif %}
+            </strong>
+            <span>Citizen rating ({{ summary.rating_count }})</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ summary.reopened_jobs }}</strong>
+            <span>Reopened jobs</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ summary.rejected_jobs }}</strong>
+            <span>Work rejected by admin</span>
+        </div>
+        <div class="stat-tile">
+            <strong>{{ summary.start_warnings }}</strong>
+            <span>Not started in time</span>
+        </div>
+    </div>
+
+    {% for complaint in complaints %}
+
+        <div class="card">
+
+            <div class="complaint-head">
+                <h3>{{ complaint.type }} <span class="muted">· #{{ complaint.id[-6:] }}</span></h3>
+                {{ status_badge(complaint.status) }}
+            </div>
+
+            <p>{{ complaint.description }}</p>
+
+            <div class="chips">
+                {{ deadline_chip(complaint) }}
+                {{ age_chip(complaint.existing_days) }}
+
+                {% if complaint.start_overdue %}
+                    <span class="chip chip-red">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Not started yet (assigned {{ complaint.assigned_at.strftime('%d %b') }})
+                    </span>
+                {% endif %}
+
+                {% if complaint.reopened %}
+                    <span class="chip chip-purple">
+                        <i class="fa-solid fa-rotate-left"></i> Reopened by citizen
+                    </span>
+                {% endif %}
+
+                {% if complaint.work_rejected_count %}
+                    <span class="chip chip-red">
+                        <i class="fa-solid fa-ban"></i>
+                        Work rejected by admin{% if complaint.work_rejected_count > 1 %} ({{ complaint.work_rejected_count }}x){% endif %}
+                    </span>
+                {% endif %}
+
+                {% if complaint.worker_done and complaint.was_late %}
+                    <span class="chip chip-red">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Finished late (₹{{ late_penalty }} penalty)
+                    </span>
+                {% elif complaint.worker_done and complaint.deadline %}
+                    <span class="chip chip-green">
+                        <i class="fa-solid fa-circle-check"></i> Finished on time
+                    </span>
+                {% endif %}
+            </div>
+
+            {% if complaint.status == "In Progress" and not complaint.worker_done and complaint.work_rejected_reason %}
+                <div class="flash flash-danger" style="margin:10px 0">
+                    <strong>The admin rejected your work:</strong> {{ complaint.work_rejected_reason }}
+                    Please fix it and upload a new photo. A rejected photo cannot be used again.
+                </div>
+            {% endif %}
+
+            {% if complaint.reopened and complaint.reopen_reason %}
+                <div class="flash flash-warning" style="margin:10px 0">
+                    <strong>The citizen says it is not fixed:</strong> {{ complaint.reopen_reason }}
+                    Upload a new photo after fixing it.
+                </div>
+            {% endif %}
+
+            <div class="complaint-meta">
+                <span><strong>Location:</strong> {{ complaint.location }}</span>
+                <span><strong>Reported:</strong> {{ complaint.created_at.strftime('%d %b %Y') }}</span>
+            </div>
+
+            <div class="photo-row">
+                {{ photo(complaint.image_filename, "Reported") }}
+                {{ photo(complaint.resolution_image_filename, "Your photo") }}
+            </div>
+
+            {% if complaint.feedback_rating %}
+                <div class="feedback-box">
+                    <h4>Citizen feedback</h4>
+                    {{ stars(complaint.feedback_rating) }}
+                    {% if complaint.rating_penalty == "pending" %}
+                        <span class="chip chip-blue">Low rating: the admin is reviewing it</span>
+                    {% elif complaint.rating_penalty == "approved" %}
+                        <span class="chip chip-red">Low rating: ₹{{ rating_penalty }} penalty approved</span>
+                    {% elif complaint.rating_penalty == "dismissed" %}
+                        <span class="chip chip-green">Low rating: the admin dismissed the penalty</span>
+                    {% endif %}
+                    {% if complaint.feedback_comment %}
+                        <p style="margin:8px 0 0">{{ complaint.feedback_comment }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="actions">
+
+                {% if complaint.status == "Assigned" %}
+
+                    <form action="{{ url_for('workers.start_work', complaint_id=complaint.id) }}" method="POST">
+                        <button type="submit" class="btn btn-small">
+                            <i class="fa-solid fa-play"></i> Start work
+                        </button>
+                    </form>
+
+                {% elif complaint.status == "In Progress" %}
+
+                    {% if complaint.worker_done %}
+
+                        <span class="muted">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            Work done. Waiting for the admin to resolve it.
+                        </span>
+
+                    {% else %}
+
+                        <form
+                            class="inline-form"
+                            action="{{ url_for('workers.mark_done', complaint_id=complaint.id) }}"
+                            method="POST"
+                            enctype="multipart/form-data"
+                        >
+                            <input
+                                class="field"
+                                type="file"
+                                name="fixed_image"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                required
+                            >
+
+                            <button type="submit" class="btn btn-small">
+                                <i class="fa-solid fa-check"></i> Upload photo and mark done
+                            </button>
+                        </form>
+
+                    {% endif %}
+
+                {% elif complaint.status == "Resolved" %}
+
+                    <span class="muted"><i class="fa-solid fa-circle-check"></i> Completed</span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty">No complaints have been assigned to you yet.</div>
+
+    {% endfor %}
+
+</main>
+
+{% endblock %}

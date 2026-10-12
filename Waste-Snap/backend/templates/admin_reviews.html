@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stars, photo %}
+
+{% block title %}Reviews | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Reviews and violations</h1>
+            <p>Low ratings need your decision before any money is taken from a worker's payment.</p>
+        </div>
+
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light">
+            <i class="fa-solid fa-arrow-left"></i> Complaints
+        </a>
+    </div>
+
+    <h2 style="margin:0 0 6px">Low-rating penalty reviews</h2>
+    <p class="muted" style="margin-bottom:14px">
+        A citizen gave 1 or 2 stars. A low rating alone does not cut any payment.
+        Check whether the reason is fair (for example, the work really was poor), then approve or dismiss.
+        Approving takes ₹{{ rating_penalty }} off the payment for that job.
+    </p>
+
+    <div class="review-grid">
+
+        {% for review in reviews %}
+
+            <div class="card">
+
+                <div class="complaint-head">
+                    <h3>{{ review.type }} <span class="muted">· #{{ review.id[-6:] }} · {{ review.location }}</span></h3>
+                    {{ stars(review.feedback_rating) }}
+                </div>
+
+                <p>
+                    <strong>Citizen ({{ review.citizen_name }}) said:</strong>
+                    {% if review.feedback_comment %}
+                        "{{ review.feedback_comment }}"
+                    {% else %}
+                        <span class="muted">(no comment given)</span>
+                    {% endif %}
+                </p>
+
+                <div class="chips">
+                    <span class="chip chip-blue">Worker: {{ review.worker_name }}</span>
+
+                    {% if review.was_late %}
+                        <span class="chip chip-red">Finished late</span>
+                    {% else %}
+                        <span class="chip chip-green">Finished on time</span>
+                    {% endif %}
+
+                    {% if review.reopened %}
+                        <span class="chip chip-purple">Was reopened once</span>
+                    {% endif %}
+                </div>
+
+                <div class="photo-row">
+                    {{ photo(review.image_filename, "Reported") }}
+                    {{ photo(review.resolution_image_filename, "Worker's proof") }}
+                </div>
+
+                <form
+                    action="{{ url_for('admin.decide_review', complaint_id=review.id) }}"
+                    method="POST"
+                    style="margin-top:14px"
+                >
+                    <input
+                        class="field"
+                        type="text"
+                        name="note"
+                        maxlength="300"
+                        placeholder="Your note (optional)"
+                        style="width:100%;margin-bottom:10px"
+                    >
+
+                    <div class="actions" style="margin-top:0">
+                        <button type="submit" name="decision" value="approve" class="btn btn-small btn-danger">
+                            Approve penalty (₹{{ rating_penalty }})
+                        </button>
+                        <button type="submit" name="decision" value="dismiss" class="btn btn-small">
+                            Dismiss: the rating is not a valid reason
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">No low ratings are waiting for review.</div>
+
+        {% endfor %}
+
+    </div>
+
+    <h2 style="margin:34px 0 14px">Violation log</h2>
+
+    <div class="table-wrap">
+        <table class="table">
+
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Who</th>
+                    <th>What</th>
+                    <th>Complaint</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for v in violations %}
+
+                    <tr>
+                        <td>{{ v.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                        <td>{{ v.user_name }} <span class="muted small">({{ v.user_role }})</span></td>
+                        <td>
+                            {% if v.kind == "invalid_complaint" %}
+                                <span class="chip chip-red">Invalid complaint (strike)</span>
+                            {% elif v.kind == "duplicate_photo" %}
+                                <span class="chip chip-red">Re-used proof photo</span>
+                            {% elif v.kind == "reopened" %}
+                                <span class="chip chip-purple">Job reopened by citizen</span>
+                            {% elif v.kind == "work_rejected" %}
+                                <span class="chip chip-red">Work rejected by admin</span>
+                            {% elif v.kind == "low_rating_penalty" %}
+                                <span class="chip chip-red">Low-rating penalty</span>
+                            {% else %}
+                                {{ v.kind }}
+                            {% endif %}
+                        </td>
+                        <td>{% if v.complaint_ref %}#{{ v.complaint_ref }}{% else %}-{% endif %}</td>
+                        <td>{{ v.note }}</td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="5" class="muted" style="text-align:center">Nothing recorded yet.</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</main>
+
+{% endblock %}
