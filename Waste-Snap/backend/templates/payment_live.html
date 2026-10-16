@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+
+{% block title %}Payment {{ payment.reference }} | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page" style="width:min(980px, calc(100% - 48px))">
+
+    <div class="page-header">
+        <div>
+            <h1 id="live-title">Payment in progress</h1>
+            <p>
+                {{ payment.reference }} · {{ payment.complaint_type }} · #{{ payment.complaint_ref }}
+            </p>
+        </div>
+
+        {% if current_user.role == "admin" %}
+            <a href="{{ url_for('admin.payments') }}" class="btn btn-light">
+                <i class="fa-solid fa-arrow-left"></i> Back to payments
+            </a>
+        {% else %}
+            <a href="{{ url_for('company.dashboard') }}" class="btn btn-light">
+                <i class="fa-solid fa-arrow-left"></i> Back to my payments
+            </a>
+        {% endif %}
+    </div>
+
+    <div
+        id="live"
+        data-status-url="{{ url_for('payments.status', payment_id=payment.id) }}"
+        data-receipt-url="{{ url_for('payments.receipt', payment_id=payment.id) }}"
+        {% if current_user.role == "admin" %}
+            data-retry-url="{{ url_for('admin.checkout', payment_id=payment.id) }}"
+        {% endif %}
+    >
+
+        <div class="card live-head">
+            <div>
+                <span class="muted small">Paying</span>
+                <h2 style="margin:0">{{ payment.company_name }}</h2>
+            </div>
+            <div style="text-align:right">
+                <span class="muted small">Amount</span>
+                <h2 style="margin:0">₹{{ "%.2f"|format(payment.net_amount) }}</h2>
+                {% if payment.penalty %}
+                    <span class="chip chip-red">after ₹{{ "%.2f"|format(payment.penalty) }} penalty</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="live-grid">
+
+            <div class="card">
+                <div class="progress"><div class="progress-bar" id="bar" style="width:0%"></div></div>
+
+                <ol class="stepper" id="steps">
+                    <li class="muted">Loading...</li>
+                </ol>
+
+                <div id="result"></div>
+            </div>
+
+            <div class="card">
+                <h3>Timeline</h3>
+                <ul class="timeline" id="log"></ul>
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="hint" style="text-align:center">
+        This screen updates by itself. It is a simulated payment: no real money moves.
+    </p>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/payment_live.js') }}"></script>
+
+{% endblock %}

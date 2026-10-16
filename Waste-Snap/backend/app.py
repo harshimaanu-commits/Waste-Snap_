@@ -1,5 +1,12 @@
 
-from flask import Flask, render_template, abort, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    abort,
+    redirect,
+    url_for,
+    request
+)
 from flask_login import (
     LoginManager,
     login_required,
@@ -9,6 +16,7 @@ from flask_login import (
 # Import database configuration and connection
 from config import Config
 from models import init_db_connection, get_db
+from data_export import schedule_export
 
 # Import database helper
 from db_helpers import (
@@ -27,6 +35,7 @@ from routes.complaints import complaints_bp
 from routes.admin import admin_bp
 from routes.workers import workers_bp
 from routes.company import company_bp
+from routes.payments import payments_bp
 
 # -----------------------------------------
 # 1. CREATE FLASK APPLICATION
@@ -46,6 +55,32 @@ app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 # -----------------------------------------
 
 init_db_connection(app)
+
+
+# -----------------------------------------
+# KEEP A COPY OF THE DATABASE IN FILES
+# -----------------------------------------
+#
+# After every change (a POST request that worked) the data/ folder
+# (JSON files + a .db file) is rewritten a moment later.
+
+@app.after_request
+def keep_data_files_up_to_date(response):
+
+    if (
+        app.config["AUTO_EXPORT"]
+        and request.method == "POST"
+        and response.status_code < 400
+        and request.endpoint not in ("auth.login", "auth.logout")
+    ):
+        schedule_export()
+
+    return response
+
+
+# Write the files once when the app starts
+if app.config["AUTO_EXPORT"]:
+    schedule_export(delay=1)
 
 
 # -----------------------------------------
@@ -84,6 +119,9 @@ app.register_blueprint(workers_bp)
 
 # Register Company routes
 app.register_blueprint(company_bp)
+
+# Register the live payment / receipt pages
+app.register_blueprint(payments_bp)
 
 
 # -----------------------------------------

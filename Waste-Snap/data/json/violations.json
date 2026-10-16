@@ -1,0 +1,82 @@
+[
+  {
+    "id": "6acd1960738b786085799c12",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6acd1935738b786085799c11",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-12 12:31:12"
+  },
+  {
+    "id": "6acd19cf738b786085799c13",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "work_rejected",
+    "complaint_id": "6acd1935738b786085799c11",
+    "note": "clean properly",
+    "created_at": "2026-10-12 12:33:03"
+  },
+  {
+    "id": "6acda277988f029478ffa4e3",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6acda20b988f029478ffa4e2",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-13 08:46:07"
+  },
+  {
+    "id": "6acda2a3988f029478ffa4e4",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6acda20b988f029478ffa4e2",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-13 08:46:51"
+  },
+  {
+    "id": "6acda9c2988f029478ffa4e7",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6acda973988f029478ffa4e6",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-13 09:17:14"
+  },
+  {
+    "id": "6acda9da988f029478ffa4e8",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6acda973988f029478ffa4e6",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-13 09:17:38"
+  },
+  {
+    "id": "6ad25edab789c6d910cc9a25",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6ad25e61b789c6d910cc9a24",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-16 12:28:58"
+  },
+  {
+    "id": "6ad25ee9b789c6d910cc9a26",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6ad25e61b789c6d910cc9a24",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-16 12:29:13"
+  },
+  {
+    "id": "6ad1f973f39e2f8141e1ab57",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6ad1f908f39e2f8141e1ab56",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-16 15:46:19"
+  },
+  {
+    "id": "6ad1f9b0f39e2f8141e1ab58",
+    "user_id": "6acbb2f375d05be943db379b",
+    "kind": "duplicate_photo",
+    "complaint_id": "6ad1f908f39e2f8141e1ab56",
+    "note": "Tried to upload a photo that was already used",
+    "created_at": "2026-10-16 15:47:20"
+  }
+]

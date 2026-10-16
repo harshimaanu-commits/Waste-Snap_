@@ -723,6 +723,338 @@ details.reject form {
 }
 
 
+/* ---------- PAYMENT: STATUSES, CHECKOUT, LIVE SCREEN, RECEIPT ---------- */
+
+.badge-requested  { background: #e1f0fb; color: #1b5d8a; }
+.badge-processing { background: #fff3d6; color: #8a6410; }
+.badge-failed     { background: #fdeaea; color: #a33b3b; }
+
+/* Payment method tabs on the checkout page */
+.method-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+.method-tab input {
+    position: absolute;
+    opacity: 0;
+
+    width: 1px;
+    height: 1px;
+}
+
+.method-tab span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 18px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--white);
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.method-tab input:checked + span {
+    border-color: var(--green-600);
+
+    background: var(--green-900);
+
+    color: #ffffff;
+}
+
+.method-tab input:focus-visible + span {
+    outline: 2px solid var(--green-600);
+    outline-offset: 2px;
+}
+
+/* Live payment screen */
+.live-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.live-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 22px;
+}
+
+.progress {
+    height: 10px;
+
+    margin-bottom: 22px;
+
+    border-radius: 999px;
+
+    background: #e6efe9;
+
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+
+    border-radius: 999px;
+
+    background: var(--green-600);
+
+    transition: width 0.6s ease;
+}
+
+.progress-bar.progress-paid { background: #1f9d55; }
+.progress-bar.progress-failed { background: #d64545; }
+
+.stepper {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.step {
+    display: flex;
+    gap: 14px;
+
+    padding: 10px 0;
+}
+
+.step .dot {
+    flex: none;
+
+    width: 28px;
+    height: 28px;
+
+    border: 2px solid #c9d8cf;
+    border-radius: 50%;
+
+    background: var(--white);
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 24px;
+    text-align: center;
+}
+
+.step strong {
+    display: block;
+
+    font-size: 15px;
+}
+
+.step small {
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+.step-wait strong { color: var(--muted); }
+
+.step-done .dot {
+    border-color: #1f9d55;
+
+    background: #1f9d55;
+}
+
+.step-active .dot {
+    border-color: var(--green-600);
+    border-top-color: transparent;
+
+    animation: spin 0.9s linear infinite;
+}
+
+.step-failed .dot {
+    border-color: #d64545;
+
+    background: #d64545;
+}
+
+.step-failed strong,
+.step-failed small {
+    color: #a33b3b;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.result {
+    margin-top: 16px;
+    padding: 16px 18px;
+
+    border-radius: 14px;
+}
+
+.result h3 {
+    margin: 0 0 6px;
+}
+
+.result p {
+    margin: 0 0 8px;
+}
+
+.result-ok {
+    background: #eafaf0;
+
+    border: 1px solid #bfe8cd;
+}
+
+.result-bad {
+    background: #fff3f3;
+
+    border: 1px solid #f0c8c8;
+}
+
+.timeline {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+
+    font-size: 14px;
+}
+
+.timeline li {
+    padding: 7px 0 7px 14px;
+
+    border-left: 3px solid var(--border);
+}
+
+.timeline li.timeline-success { border-left-color: #1f9d55; }
+.timeline li.timeline-error   { border-left-color: #d64545; color: #a33b3b; }
+
+/* Receipt */
+.receipt {
+    padding: 30px 34px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    background: var(--white);
+
+    box-shadow: var(--shadow-sm);
+}
+
+.receipt-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 14px;
+
+    border-bottom: 2px solid var(--green-900);
+}
+
+.receipt-brand {
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+    font-size: 24px;
+}
+
+.receipt-paid {
+    padding: 4px 16px;
+
+    border: 3px solid #1f9d55;
+    border-radius: 8px;
+
+    color: #1f9d55;
+
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+
+    transform: rotate(-6deg);
+}
+
+.receipt-table {
+    width: 100%;
+
+    margin-top: 16px;
+
+    border-collapse: collapse;
+}
+
+.receipt-table td {
+    padding: 8px 0;
+
+    border-bottom: 1px dashed var(--border);
+
+    vertical-align: top;
+}
+
+.receipt-table td:first-child {
+    width: 40%;
+
+    color: var(--muted);
+}
+
+.receipt-table.totals td:last-child {
+    text-align: right;
+}
+
+.receipt-table tr.grand td {
+    border-bottom: 0;
+
+    color: var(--green-950);
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.receipt-note {
+    margin-top: 22px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 800px) {
+
+    .live-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Printing the receipt: only the receipt itself */
+@media print {
+
+    .navbar,
+    footer,
+    .flash-area,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff;
+    }
+
+    .page {
+        padding: 0;
+    }
+
+    .receipt {
+        border: 0;
+
+        box-shadow: none;
+    }
+}
+
+
 /* ---------- RESPONSIVE ---------- */
 
 @media (max-width: 800px) {

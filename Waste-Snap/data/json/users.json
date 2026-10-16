@@ -1,0 +1,34 @@
+[
+  {
+    "id": "6acbb2f375d05be943db379a",
+    "name": "Demo Admin",
+    "email": "admin@wastesnap.test",
+    "password_hash": "[hidden]",
+    "role": "admin",
+    "created_at": "2026-10-11 11:01:55"
+  },
+  {
+    "id": "6acbb2f375d05be943db379b",
+    "name": "Demo Worker",
+    "email": "worker@wastesnap.test",
+    "password_hash": "[hidden]",
+    "role": "worker",
+    "created_at": "2026-10-11 11:01:55"
+  },
+  {
+    "id": "6acbb2f475d05be943db379c",
+    "name": "Demo Company",
+    "email": "company@wastesnap.test",
+    "password_hash": "[hidden]",
+    "role": "company",
+    "created_at": "2026-10-11 11:01:56"
+  },
+  {
+    "id": "6acbb2f475d05be943db379d",
+    "name": "Demo Citizen",
+    "email": "citizen@wastesnap.test",
+    "password_hash": "[hidden]",
+    "role": "citizen",
+    "created_at": "2026-10-11 11:01:56"
+  }
+]

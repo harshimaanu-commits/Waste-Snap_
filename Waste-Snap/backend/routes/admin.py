@@ -1,6 +1,7 @@
 
 from flask import (
     Blueprint,
+    send_from_directory,
     render_template,
     abort,
     redirect,
@@ -11,6 +12,14 @@ from flask import (
 from flask_login import login_required, current_user
 
 
+from payment_gateway import start_payment
+from data_export import (
+    export_all,
+    export_dir,
+    list_files,
+    downloadable_names,
+    COLLECTIONS
+)
 from db_helpers import (
     get_all_complaints,
     verify_complaint,
@@ -21,7 +30,9 @@ from db_helpers import (
     get_resolved_without_payment,
     get_payments,
     create_payment,
-    mark_payment_paid,
+    get_payment,
+    approve_payment_request,
+    reject_payment_request,
     reject_complaint,
     reject_work,
     get_rating_reviews,
@@ -235,30 +246,107 @@ def create_company_payment(complaint_id):
 
 
 # -----------------------------------------
-# ADMIN - MARK A PAYMENT AS PAID
+# ADMIN - APPROVE OR REJECT A COMPANY'S PAYMENT REQUEST
 # -----------------------------------------
 
 @admin_bp.route(
-    "/admin/payments/pay/<payment_id>",
+    "/admin/payments/<payment_id>/approve",
     methods=["POST"]
 )
 @login_required
-def pay(payment_id):
+def approve_request(payment_id):
 
     if current_user.role != "admin":
         abort(403)
 
-    if mark_payment_paid(payment_id):
-        flash("Payment marked as paid.", "success")
-    else:
-        flash(
-            "The payment cannot be paid now: it is already paid, "
-            "on hold (complaint reopened), or a low-rating review "
-            "is waiting for your decision.",
-            "warning"
-        )
+    success, message = approve_payment_request(
+        payment_id,
+        request.form.get("amount")
+    )
+
+    flash(message, "success" if success else "danger")
 
     return redirect(url_for("admin.payments"))
+
+
+
+@admin_bp.route(
+    "/admin/payments/<payment_id>/reject",
+    methods=["POST"]
+)
+@login_required
+def reject_request(payment_id):
+
+    if current_user.role != "admin":
+        abort(403)
+
+    success, message = reject_payment_request(
+        payment_id,
+        request.form.get("reason", "")
+    )
+
+    flash(message, "success" if success else "danger")
+
+    return redirect(url_for("admin.payments"))
+
+
+
+# -----------------------------------------
+# ADMIN - PAY A COMPANY (the simulated checkout)
+# -----------------------------------------
+
+@admin_bp.route(
+    "/admin/payments/<payment_id>/checkout",
+    methods=["GET", "POST"]
+)
+@login_required
+def checkout(payment_id):
+
+    if current_user.role != "admin":
+        abort(403)
+
+    payment = get_payment(payment_id)
+
+    if payment is None:
+        abort(404)
+
+    # Already being paid: show the live screen instead
+    if payment["status"] == "processing":
+        return redirect(url_for("payments.live", payment_id=payment_id))
+
+    if payment["status"] not in ("pending", "failed"):
+        flash(
+            f"This payment cannot be paid now (it is {payment['status']}).",
+            "warning"
+        )
+        return redirect(url_for("admin.payments"))
+
+    if request.method == "POST":
+
+        success, message = start_payment(
+            payment_id,
+            request.form.get("method", ""),
+            request.form
+        )
+
+        if success:
+            return redirect(url_for("payments.live", payment_id=payment_id))
+
+        flash(message, "danger")
+
+    # Suggested details for the payee (only to save typing in the demo)
+    slug = "".join(
+        ch for ch in payment["company_name"].lower() if ch.isalnum()
+    ) or "company"
+
+    return render_template(
+        "payment_checkout.html",
+        payment=payment,
+        selected=request.form.get("method", "upi"),
+        form=request.form,
+        suggested_upi=f"{slug}@wastesnap",
+        suggested_holder=payment["company_name"]
+    )
 
 
 
@@ -375,3 +463,67 @@ def decide_review(complaint_id):
     flash(message, "success" if success else "warning")
 
     return redirect(url_for("admin.reviews"))
+
+
+
+# -----------------------------------------
+# ADMIN - THE DATABASE COPY IN FILES
+# -----------------------------------------
+
+@admin_bp.route("/admin/data")
+@login_required
+def data_files():
+
+    if current_user.role != "admin":
+        abort(403)
+
+    return render_template(
+        "admin_data.html",
+        files=list_files(),
+        collections=COLLECTIONS
+    )
+
+
+
+@admin_bp.route("/admin/data/export", methods=["POST"])
+@login_required
+def export_now():
+
+    if current_user.role != "admin":
+        abort(403)
+
+    result = export_all()
+
+    if result["ok"]:
+        counts = ", ".join(
+            f"{count} {name}" for name, count in result["counts"].items()
+        )
+        message = f"Files updated ({counts})."
+
+        if not result["db_file_updated"]:
+            message += (
+                " The .db file could not be replaced (is it open in "
+                "another program?), so it still has the older data."
+            )
+
+        flash(message, "success" if result["db_file_updated"] else "warning")
+
+    else:
+        flash("Could not write the files: " + result["error"], "danger")
+
+    return redirect(url_for("admin.data_files"))
+
+
+
+@admin_bp.route("/admin/data/download/<path:name>")
+@login_required
+def download_data_file(name):
+
+    if current_user.role != "admin":
+        abort(403)
+
+    # Only the known files can be downloaded
+    if name not in downloadable_names():
+        abort(404)
+
+    return send_from_directory(export_dir(), name, as_attachment=True)

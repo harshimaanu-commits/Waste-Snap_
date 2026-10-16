@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Data files | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>Database copy in files</h1>
+            <p>A read-only copy of the MongoDB data, kept as ordinary files.</p>
+        </div>
+
+        <form action="{{ url_for('admin.export_now') }}" method="POST">
+            <button type="submit" class="btn">
+                <i class="fa-solid fa-rotate"></i> Export now
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>What is this?</h2>
+        <p>
+            MongoDB Atlas is the real database. These files are a copy of it, written
+            when the app starts and a moment after every change, so they are always
+            close to up to date. Password hashes are never included.
+        </p>
+        <ul style="margin:8px 0 0 18px" class="small">
+            <li><strong>JSON files</strong> open in any text editor: one file each for
+                {% for name in collections %}<code>{{ name }}</code>{{ ', ' if not loop.last }}{% endfor %}.</li>
+            <li><strong>wastesnap_backup.db</strong> is the same data as one SQLite database.
+                Open it with <em>DB Browser for SQLite</em> to see the tables.</li>
+            <li>On the computer running the app, the files are in the project's <code>data/</code> folder.</li>
+        </ul>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Size</th>
+                    <th>Last written</th>
+                    <th>Download</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for file in files %}
+
+                    <tr>
+                        <td><code>data/{{ file.name }}</code></td>
+                        <td>
+                            {% if file.size < 1024 %}{{ file.size }} B
+                            {% else %}{{ '%.1f' | format(file.size / 1024) }} KB{% endif %}
+                        </td>
+                        <td>{{ file.modified }}</td>
+                        <td>
+                            <a class="btn btn-light btn-small"
+                               href="{{ url_for('admin.download_data_file', name=file.name) }}">
+                                <i class="fa-solid fa-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="4" class="muted" style="text-align:center">
+                            No files yet. Press "Export now".
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</main>
+
+{% endblock %}

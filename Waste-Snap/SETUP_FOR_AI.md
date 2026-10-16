@@ -50,12 +50,17 @@ git clone https://github.com/Mohith-Prasanna-07/Waste-Snap
 cd Waste-Snap
 ```
 
-Then, in the project folder:
+Then, in the cloned folder:
 
 ```
 git checkout backend
 git pull
+cd Waste-Snap
 ```
+
+The repository holds one project folder that is also called `Waste-Snap`. Everything
+below (the `.env` file, the virtual environment commands, `backend/`) happens **inside that
+inner folder**.
 
 Check: the folder `backend/routes/` must exist and contain `company.py`. If
 not, the wrong branch is checked out.

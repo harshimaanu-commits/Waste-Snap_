@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt {{ payment.receipt_no }} | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page" style="width:min(760px, calc(100% - 48px))">
+
+    <div class="page-header no-print">
+        <div>
+            <h1>Payment receipt</h1>
+            <p>Print it, or choose "Save as PDF" in the print window.</p>
+        </div>
+
+        <div class="actions" style="margin:0">
+            <button type="button" class="btn" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Print / save as PDF
+            </button>
+
+            {% if current_user.role == "admin" %}
+                <a href="{{ url_for('admin.payments') }}" class="btn btn-light">Back</a>
+            {% else %}
+                <a href="{{ url_for('company.dashboard') }}" class="btn btn-light">Back</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="receipt">
+
+        <div class="receipt-top">
+            <div>
+                <strong class="receipt-brand">WasteSnap</strong>
+                <div class="muted small">Community waste management (demo)</div>
+            </div>
+            <div class="receipt-paid">PAID</div>
+        </div>
+
+        <h2 style="margin:18px 0 4px">Payment receipt</h2>
+        <div class="muted small">Receipt no. {{ payment.receipt_no }}</div>
+
+        <table class="receipt-table">
+            <tr><td>Paid to</td><td><strong>{{ payment.company_name }}</strong><br><span class="muted small">{{ payment.company_email }}</span></td></tr>
+            <tr><td>Paid on</td><td>{{ payment.paid_at.strftime('%d %b %Y, %H:%M:%S') }}</td></tr>
+            <tr><td>Transaction ID</td><td>{{ payment.txn_id }}</td></tr>
+            <tr><td>Payment reference</td><td>{{ payment.reference }}</td></tr>
+            <tr><td>Payment method</td><td>{{ payment.method_label }}</td></tr>
+            <tr><td>Work done</td><td>{{ payment.complaint_type }} at {{ payment.complaint_location }} (complaint #{{ payment.complaint_ref }})</td></tr>
+            {% if payment.worker_name and payment.worker_name != '-' %}
+                <tr><td>Worker</td><td>{{ payment.worker_name }}</td></tr>
+            {% endif %}
+        </table>
+
+        <table class="receipt-table totals">
+            <tr><td>Agreed amount</td><td>₹{{ "%.2f"|format(payment.amount) }}</td></tr>
+            {% if payment.penalty_late %}
+                <tr><td>Late completion penalty</td><td>-₹{{ "%.2f"|format(payment.penalty_late) }}</td></tr>
+            {% endif %}
+            {% if payment.penalty_rating %}
+                <tr><td>Low-rating penalty (approved by the admin)</td><td>-₹{{ "%.2f"|format(payment.penalty_rating) }}</td></tr>
+            {% endif %}
+            <tr class="grand"><td>Total paid</td><td>₹{{ "%.2f"|format(payment.net_amount) }}</td></tr>
+        </table>
+
+        {% if payment.events %}
+            <h3 style="margin-top:22px">Payment timeline</h3>
+            <ul class="timeline">
+                {% for event in payment.events %}
+                    <li class="timeline-{{ event.kind }}">
+                        <span class="muted small">{{ event.at.strftime('%d %b %H:%M:%S') }}</span>
+                        {{ event.text }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <p class="receipt-note">
+            This is a demo receipt from a simulated payment gateway. No real money was moved.
+        </p>
+
+    </div>
+
+</main>
+
+{% endblock %}

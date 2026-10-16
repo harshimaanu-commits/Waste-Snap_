@@ -276,6 +276,8 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
       <li><b>init_db.py</b>: run once. Creates database indexes (for example, "no two users with the same email").</li>
       <li><b>create_admin.py, create_worker.py, create_company.py</b>: ask for a name, email and password and create that kind of account. Citizens sign up on the website instead.</li>
       <li><b>seed_demo.py</b>: creates one demo account per role plus three sample complaints, for a quick demo.</li>
+      <li><b>payment_gateway.py</b>: the simulated payment gateway (payment methods and their test values, the stages, the background worker, the live status).</li>
+      <li><b>data_export.py</b>: writes a read-only copy of the whole database into the <code>data/</code> folder (JSON files and one SQLite <code>.db</code> file). It runs at startup and a moment after every change. Password hashes are left out.</li>
     </ul></div>
 
     <div class="folder"><h4>backend/routes/ (what each URL does)</h4><ul>
@@ -283,7 +285,8 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
       <li><b>complaints.py</b>: <code>/report</code> (citizen reports an issue with a photo) and <code>/my-complaints</code>.</li>
       <li><b>admin.py</b>: <code>/admin</code> plus verify, assign, resolve, and the payments pages.</li>
       <li><b>workers.py</b>: <code>/worker</code> plus start work and upload the proof photo.</li>
-      <li><b>company.py</b>: <code>/company</code>, the company's payment list.</li>
+      <li><b>company.py</b>: <code>/company</code> (the company's payments and payment requests).</li>
+      <li><b>payments.py</b>: the live payment screen, its status feed and the receipt, shared by the admin and the payee company.</li>
     </ul></div>
 
     <div class="folder"><h4>backend/templates/ (the pages)</h4><ul>
@@ -294,7 +297,8 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
       <li><b>dashboard.html, report_issue.html, my_complaints.html</b>: citizen pages.</li>
       <li><b>worker_dashboard.html</b>: the worker's tasks.</li>
       <li><b>admin_dashboard.html, admin_payments.html, admin_reviews.html</b>: admin pages (complaints, payments, low-rating reviews and the violation log).</li>
-      <li><b>company_dashboard.html</b>: the company's payments.</li>
+      <li><b>company_dashboard.html</b>: the company's payments and payment requests.</li>
+      <li><b>payment_checkout.html, payment_live.html, payment_receipt.html</b>: the checkout, the live progress screen and the printable receipt.</li>
       <li><b>_macros.html</b>: two small reusable pieces: the coloured status badge and the labelled photo.</li>
     </ul></div>
 
@@ -302,6 +306,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
       <li><b>css/style.css</b>: your friend's design (colours, landing page, login screen).</li>
       <li><b>css/app.css</b>: extra styling for the dashboards, tables, buttons and badges.</li>
       <li><b>js/auth.js</b>: the show/hide password eye.</li>
+      <li><b>js/payment_checkout.js, payment_live.js, payment_poll.js</b>: the checkout form, the live progress screen, and the auto-refresh of payment lists.</li>
       <li><b>uploads/</b> <span class="tag t-red">not in git</span>: every uploaded photo is saved here with a random file name.</li>
     </ul></div>
 
@@ -602,6 +607,7 @@ existing_days = days_existing + (end_time.date() - created_at.date()).days</code
     <tr><td>Low-rating penalty review</td><td>Worker (admin decides)</td><td>A 1-2 star rating creates a <b>pending review</b>. It does not cut pay by itself. The admin sees the comment and the worker's timing and clicks <b>Approve</b> (₹25 off the job's payment) or <b>Dismiss</b>. The payment cannot be paid while a review is pending.</td></tr>
     <tr><td>Not started in time</td><td>Worker</td><td>Still "Assigned" after 48 hours: a warning appears for the worker and the admin. No money.</td></tr>
     <tr><td>Duplicate proof photo</td><td>Worker</td><td>Each photo is fingerprinted (SHA-256). A proof photo that matches the citizen's photo, another job's proof, or an old rejected proof is refused and logged.</td></tr>
+    <tr><td>Database copy in files</td><td>Admin / teacher</td><td>After every successful change, the app waits 2 seconds (so many changes are written once) and rewrites <code>data/json/*.json</code> and <code>data/wastesnap_backup.db</code>. Admins can see and download them on the <b>Data</b> page. It is a one-way copy; MongoDB stays the real database.</td></tr>
     <tr><td>Reject the worker's work</td><td>Admin and worker</td><td>When a job is marked done, the admin can <b>Resolve</b> or <b>Reject work</b> with a reason. It goes back to the same worker with a new 3-day deadline, the rejected photo is blocked from re-upload, and it is logged against the worker. A job that was already late stays late.</td></tr>
     <tr><td>Reopen a complaint</td><td>Citizen and worker</td><td>Within 3 days, once, before rating, and before the payment is paid: back to <code>In Progress</code> with a new 3-day deadline. The payment goes <code>on_hold</code> and the reopen is logged against the worker.</td></tr>
     <tr><td>Invalid or fake complaint</td><td>Citizen</td><td>The admin rejects it. <b>Invalid</b> gives a strike; <b>duplicate</b> does not. 3 strikes in 90 days pause reporting.</td></tr>
@@ -680,44 +686,73 @@ existing_days = days_existing + (end_time.date() - created_at.date()).days</code
 <!-- ============================================================ 9 -->
 <section id="payments">
   <h2><span class="num">9</span>Companies and payments</h2>
-  <p class="lead">After a complaint is resolved, the admin pays a company for the work. It is simulated: a payment is just a record with a status.</p>
+  <p class="lead">After a complaint is resolved, a company is paid for the work. The payment goes through a <b>simulated gateway</b> that behaves like a real checkout: you pick a method, watch the steps happen live, and get a receipt. No real money moves.</p>
 
   <figure>
-    <svg viewBox="0 0 900 190" role="img" aria-label="Payment flow">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Payment states">
       <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
-      <rect class="g" x="10" y="50" width="190" height="80" rx="12"/>
-      <text class="t" x="105" y="80" text-anchor="middle">Complaint is</text>
-      <text class="t" x="105" y="98" text-anchor="middle">Resolved</text>
-      <text class="s" x="105" y="118" text-anchor="middle">no payment yet</text>
 
-      <rect class="a" x="250" y="50" width="190" height="80" rx="12"/>
-      <text class="t" x="345" y="80" text-anchor="middle">Payment: pending</text>
-      <text class="s" x="345" y="100" text-anchor="middle">Admin picks a company</text>
-      <text class="s" x="345" y="116" text-anchor="middle">and an amount (₹)</text>
+      <rect class="b" x="10" y="40" width="150" height="64" rx="32"/>
+      <text class="t" x="85" y="68" text-anchor="middle">requested</text>
+      <text class="s" x="85" y="86" text-anchor="middle">company asks</text>
 
-      <rect class="b" x="490" y="50" width="190" height="80" rx="12"/>
-      <text class="t" x="585" y="80" text-anchor="middle">Payment: paid</text>
-      <text class="s" x="585" y="100" text-anchor="middle">Admin clicks</text>
-      <text class="s" x="585" y="116" text-anchor="middle">"Mark as paid"</text>
+      <rect class="a" x="215" y="40" width="150" height="64" rx="32"/>
+      <text class="t" x="290" y="68" text-anchor="middle">pending</text>
+      <text class="s" x="290" y="86" text-anchor="middle">admin approved</text>
 
-      <rect class="p" x="730" y="50" width="160" height="80" rx="12"/>
-      <text class="t" x="810" y="80" text-anchor="middle">Company sees it</text>
-      <text class="s" x="810" y="100" text-anchor="middle">pending and paid</text>
-      <text class="s" x="810" y="116" text-anchor="middle">totals on its page</text>
+      <rect class="p" x="420" y="40" width="160" height="64" rx="32"/>
+      <text class="t" x="500" y="68" text-anchor="middle">processing</text>
+      <text class="s" x="500" y="86" text-anchor="middle">live, 5 steps</text>
 
-      <path class="ar" d="M200 90H250" marker-end="url(#ah)"/>
-      <path class="ar" d="M440 90H490" marker-end="url(#ah)"/>
-      <path class="ar" d="M680 90H730" marker-end="url(#ah)"/>
+      <rect class="g" x="740" y="40" width="150" height="64" rx="32"/>
+      <text class="t" x="815" y="68" text-anchor="middle">paid</text>
+      <text class="s" x="815" y="86" text-anchor="middle">receipt</text>
+
+      <rect class="r" x="420" y="200" width="160" height="64" rx="32"/>
+      <text class="t" x="500" y="228" text-anchor="middle">failed</text>
+      <text class="s" x="500" y="246" text-anchor="middle">reason shown</text>
+
+      <rect class="r" x="10" y="200" width="150" height="64" rx="32"/>
+      <text class="t" x="85" y="228" text-anchor="middle">rejected</text>
+      <text class="s" x="85" y="246" text-anchor="middle">can ask again</text>
+
+      <rect class="p" x="215" y="200" width="150" height="64" rx="32"/>
+      <text class="t" x="290" y="228" text-anchor="middle">on_hold</text>
+      <text class="s" x="290" y="246" text-anchor="middle">complaint reopened</text>
+
+      <path class="ar" d="M160 72H215" marker-end="url(#ah)"/>
+      <path class="ar" d="M365 72H420" marker-end="url(#ah)"/>
+      <path class="ar" d="M580 72H740" marker-end="url(#ah)"/>
+      <path class="ar" d="M500 104V200" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M580 232 C660 232 660 140 566 104" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M85 104V200" marker-end="url(#ah)"/>
+      <path class="ar dash" d="M290 104V200" marker-end="url(#ah)"/>
+
+      <text class="s" x="672" y="176" text-anchor="start">retry</text>
+      <text class="s" x="662" y="62" text-anchor="middle">success</text>
+      <text class="s" x="525" y="156" text-anchor="start">declined</text>
+      <text class="s" x="95" y="156" text-anchor="start">admin rejects</text>
     </svg>
-    <figcaption>Each payment gets a reference such as <code>PAY-20261011-A3F2</code>.</figcaption>
+    <figcaption>The admin can also create a payment directly (it starts at <code>pending</code>). Dashed arrows are the side paths.</figcaption>
   </figure>
 
+  <h3>What the admin and the company see</h3>
+  <ol class="steps">
+    <li><b>Request:</b> on its dashboard the company enters an amount and a note for a resolved job. The request appears on the admin's Payments page.</li>
+    <li><b>Approve or reject:</b> the admin approves (the amount can be changed; penalties are worked out again) or rejects with a reason. A rejected request can be sent again.</li>
+    <li><b>Pay now:</b> the checkout shows the summary and penalty lines. The admin picks <b>UPI</b>, <b>Bank transfer</b> or <b>Card</b> and enters details. Demo buttons fill in working or failing test values.</li>
+    <li><b>Live progress:</b> five steps (initiate, verify payee, authorise with the bank, transfer, confirm). The page asks the server for the status every second and shows a progress bar and a timeline. The company can open the same screen, and its dashboard refreshes by itself when the payment ends.</li>
+    <li><b>Success or failure:</b> success gives a transaction ID and a printable receipt. A failure shows the reason, and the admin clicks <b>Retry payment</b>. Every attempt stays in the timeline.</li>
+  </ol>
+
+  <h3>How the simulation works</h3>
   <ul>
-    <li><b>Only resolved complaints</b> can be paid, and <b>only once</b>: the unique index on <code>complaint_id</code> rejects a second payment.</li>
-    <li>The amount must be above 0 and at most 1,000,000. It is read with Python's <code>Decimal</code> so values like <code>1500.50</code> are handled exactly.</li>
-    <li>A company only sees <b>its own</b> payments. The admin alone can mark one as paid.</li>
-    <li>The payment also stores the worker who did the job (<code>worker_id</code>), taken from the complaint.</li>
-    <li><b>Late penalty:</b> if the worker finished after the 7-day deadline, ₹50 is deducted. The payment keeps the full <code>amount</code>, the <code>penalty</code> and the <code>net_amount</code> the company receives. The amount must be more than the penalty.</li>
+    <li><b>One atomic switch:</b> <code>start_payment()</code> changes <code>pending</code> or <code>failed</code> to <code>processing</code> in a single database step, so two clicks cannot pay twice.</li>
+    <li><b>A background thread</b> then moves the payment through the stages, waiting a little at each one and saving a timeline event (<code>payment_gateway.py</code>).</li>
+    <li><b>The live page polls</b> <code>/payments/&lt;id&gt;/status</code>, which returns JSON. This is simpler than websockets and works the same on Windows and Mac.</li>
+    <li><b>Test values</b> decide the outcome: for example PIN <code>0000</code>, card <code>4000 0000 0000 0002</code>, or an account number ending <code>0000</code> fails on purpose.</li>
+    <li><b>Safety:</b> card numbers, PINs and CVVs are never saved (only "Visa card ending 1111"). A payment cannot be paid while a low-rating review is pending or the complaint is reopened. A payment stuck in <code>processing</code> (for example the server restarted) is marked failed so it can be retried.</li>
+    <li><b>Amounts:</b> must be above 0 and at most 1,000,000, and larger than any penalty. <code>amount</code>, <code>penalty</code> and <code>net_amount</code> are all kept, and a unique index allows one payment per complaint.</li>
   </ul>
 </section>
 
@@ -745,6 +780,7 @@ existing_days = days_existing + (end_time.date() - created_at.date()).days</code
     <li><b>Phase 4, polish.</b> Demo data script, README, AI setup file, line-ending settings, one password rule (8+ characters), an admin-only <code>/db-check</code>, and debug mode controlled from <code>.env</code>.</li>
     <li><b>Second round of features.</b> Added the worker deadline (7 days) with a ₹50 penalty on the payment, citizen ratings and feedback, and the "days existing" counter.</li>
     <li><b>Third round: rules and fairness.</b> Low-rating penalty with an admin review, not-started warnings, duplicate proof-photo detection, invalid-complaint strikes, duplicate-report and daily-limit checks, reopening, and an admin response-time alert. All covered by an automated test of more than 100 checks.</li>
+    <li><b>Payment demo.</b> Replaced the one-click "Mark as paid" with a simulated gateway: UPI, bank transfer and card, a live five-step progress screen, deliberate failures with retry, printable receipts, and company payment requests that the admin approves or rejects.</li>
     <li><b>Tested</b> the whole flow with an automated script against a fake in-memory MongoDB (30 checks), looked at the pages in a browser, then you ran it yourself and pushed it to GitHub.</li>
   </ol>
 </section>

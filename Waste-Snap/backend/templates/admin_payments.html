@@ -5,18 +5,84 @@
 
 {% block content %}
 
+{% set requests = payments | selectattr('status', 'equalto', 'requested') | list %}
+
 <main class="page">
 
     <div class="page-header">
         <div>
             <h1>Company payments</h1>
-            <p>Pay a company for cleanup work on resolved complaints.</p>
+            <p>Approve payment requests, pay companies, and watch payments go through live.</p>
         </div>
 
         <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light">
             <i class="fa-solid fa-arrow-left"></i> Complaints
         </a>
     </div>
+
+    <!-- ========================================================= -->
+    <!-- REQUESTS FROM COMPANIES                                    -->
+    <!-- ========================================================= -->
+
+    {% if requests %}
+
+        <div class="card" style="border-color:#bcd9ef">
+
+            <h2><i class="fa-solid fa-inbox"></i> Payment requests from companies ({{ requests | length }})</h2>
+
+            {% for payment in requests %}
+
+                <div style="border-top:1px solid var(--border); padding:14px 0">
+
+                    <div class="complaint-head">
+                        <div>
+                            <strong>{{ payment.company_name }}</strong>
+                            asks for <strong>₹{{ "%.2f"|format(payment.amount) }}</strong>
+                            <div class="muted">
+                                {{ payment.complaint_type }} · #{{ payment.complaint_ref }} · {{ payment.complaint_location }}
+                                · worker {{ payment.worker_name }}
+                            </div>
+                            {% if payment.note %}
+                                <div class="small">Note: "{{ payment.note }}"</div>
+                            {% endif %}
+                            <div class="chips">
+                                {% if payment.penalty_late %}
+                                    <span class="chip chip-red">Finished late: -₹{{ "%.2f"|format(payment.penalty_late) }}</span>
+                                {% endif %}
+                                {% if payment.penalty_rating %}
+                                    <span class="chip chip-red">Low-rating penalty: -₹{{ "%.2f"|format(payment.penalty_rating) }}</span>
+                                {% endif %}
+                                <span class="chip chip-blue">Net if approved: ₹{{ "%.2f"|format(payment.net_amount) }}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <form class="inline-form" action="{{ url_for('admin.approve_request', payment_id=payment.id) }}" method="POST">
+                                <input class="field" type="number" name="amount" min="1" step="0.01" value="{{ '%.2f' | format(payment.amount) }}" title="You can change the amount">
+                                <button type="submit" class="btn btn-small">Approve</button>
+                            </form>
+
+                            <details class="reject">
+                                <summary class="btn btn-light btn-small">Reject</summary>
+                                <form action="{{ url_for('admin.reject_request', payment_id=payment.id) }}" method="POST">
+                                    <input class="field" type="text" name="reason" maxlength="300" placeholder="Reason (required)" required>
+                                    <button type="submit" class="btn btn-small btn-danger">Confirm reject</button>
+                                </form>
+                            </details>
+                        </div>
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+    <!-- ========================================================= -->
+    <!-- CREATE A PAYMENT YOURSELF                                  -->
+    <!-- ========================================================= -->
 
     <div class="card">
 
@@ -46,7 +112,7 @@
                         <span class="chip chip-red">Low rating penalty approved: ₹{{ rating_penalty }} will be deducted</span>
                     {% elif complaint.rating_penalty == "pending" %}
                         <span class="chip chip-blue">
-                            Low rating waiting for review (the payment cannot be paid until you decide)
+                            Low rating waiting for review (it cannot be paid until you decide)
                         </span>
                     {% endif %}
                 </div>
@@ -82,11 +148,15 @@
 
         {% else %}
 
-            <p class="muted">Every resolved complaint already has a payment.</p>
+            <p class="muted">Every resolved complaint already has a payment or a request.</p>
 
         {% endfor %}
 
     </div>
+
+    <!-- ========================================================= -->
+    <!-- ALL PAYMENTS                                               -->
+    <!-- ========================================================= -->
 
     <h2 style="margin:30px 0 14px">All payments</h2>
 
@@ -111,12 +181,15 @@
 
                 {% for payment in payments %}
 
-                    <tr>
+                    <tr
+                        data-payment-status="{{ payment.status }}"
+                        data-status-url="{{ url_for('payments.status', payment_id=payment.id) }}"
+                    >
                         <td>{{ payment.reference }}</td>
                         <td>{{ payment.company_name }}</td>
                         <td>
                             {{ payment.complaint_type }}<br>
-                            <span class="muted">#{{ payment.complaint_ref }} · {{ payment.complaint_location }}</span>
+                            <span class="muted small">#{{ payment.complaint_ref }} · {{ payment.complaint_location }}</span>
                         </td>
                         <td>₹{{ "%.2f"|format(payment.amount) }}</td>
                         <td>
@@ -126,22 +199,66 @@
                             {% else %}-{% endif %}
                         </td>
                         <td><strong>₹{{ "%.2f"|format(payment.net_amount) }}</strong></td>
-                        <td>{{ status_badge(payment.status) }}</td>
+                        <td>
+                            {{ status_badge(payment.status) }}
+                            {% if payment.status == "processing" %}
+                                <div class="live-stage muted small" style="margin-top:6px">In progress...</div>
+                            {% elif payment.status == "failed" %}
+                                <div class="muted small" style="margin-top:6px;max-width:190px">{{ payment.failure_reason }}</div>
+                            {% elif payment.status == "rejected" %}
+                                <div class="muted small" style="margin-top:6px;max-width:190px">{{ payment.reject_reason }}</div>
+                            {% endif %}
+                        </td>
                         <td>{{ payment.created_at.strftime('%d %b %Y') }}</td>
                         <td>
+
                             {% if payment.status == "pending" and payment.rating_review == "pending" %}
+
                                 <a class="btn btn-light btn-small" href="{{ url_for('admin.reviews') }}">
                                     Review the low rating first
                                 </a>
+
                             {% elif payment.status == "pending" %}
-                                <form action="{{ url_for('admin.pay', payment_id=payment.id) }}" method="POST">
-                                    <button type="submit" class="btn btn-small">Mark as paid</button>
-                                </form>
+
+                                <a class="btn btn-small" href="{{ url_for('admin.checkout', payment_id=payment.id) }}">
+                                    <i class="fa-solid fa-credit-card"></i> Pay now
+                                </a>
+
+                            {% elif payment.status == "processing" %}
+
+                                <a class="btn btn-light btn-small" href="{{ url_for('payments.live', payment_id=payment.id) }}">
+                                    <i class="fa-solid fa-satellite-dish"></i> Watch live
+                                </a>
+
+                            {% elif payment.status == "failed" %}
+
+                                <a class="btn btn-small" href="{{ url_for('admin.checkout', payment_id=payment.id) }}">
+                                    <i class="fa-solid fa-rotate"></i> Retry payment
+                                </a>
+
+                            {% elif payment.status == "paid" %}
+
+                                <a class="btn btn-light btn-small" href="{{ url_for('payments.receipt', payment_id=payment.id) }}">
+                                    <i class="fa-solid fa-receipt"></i> Receipt
+                                </a>
+                                <div class="muted small" style="margin-top:6px">
+                                    {{ payment.paid_at.strftime('%d %b %Y') }} · {{ payment.txn_id }}
+                                </div>
+
                             {% elif payment.status == "on_hold" %}
+
                                 <span class="muted">On hold: the citizen reopened the complaint</span>
+
+                            {% elif payment.status == "requested" %}
+
+                                <span class="muted">See the request above</span>
+
                             {% else %}
-                                <span class="muted">Paid {{ payment.paid_at.strftime('%d %b %Y') }}</span>
+
+                                <span class="muted">Rejected</span>
+
                             {% endif %}
+
                         </td>
                     </tr>
 
@@ -159,5 +276,7 @@
     </div>
 
 </main>
+
+<script src="{{ url_for('static', filename='js/payment_poll.js') }}"></script>
 
 {% endblock %}

@@ -21,5 +21,9 @@ Thumbs.db
 # VS Code settings
 .vscode/
 
+# Temporary files written while the data copy is being updated
+data/*.tmp
+data/json/*.tmp
+
 # Logs
 *.log

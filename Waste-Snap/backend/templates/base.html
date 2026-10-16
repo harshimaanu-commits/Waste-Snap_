@@ -55,6 +55,7 @@
                     <a href="{{ url_for('admin.dashboard') }}">Complaints</a>
                     <a href="{{ url_for('admin.payments') }}">Payments</a>
                     <a href="{{ url_for('admin.reviews') }}">Reviews</a>
+                    <a href="{{ url_for('admin.data_files') }}">Data</a>
 
                 {% elif current_user.role == "company" %}
                     <a href="{{ url_for('company.dashboard') }}">My payments</a>

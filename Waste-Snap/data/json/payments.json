@@ -1,0 +1,210 @@
+[
+  {
+    "id": "6acbb6816150efbf45d03ab1",
+    "complaint_id": "6acbb5ab6150efbf45d03ab0",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 15000.0,
+    "status": "paid",
+    "reference": "PAY-20261011-13CD",
+    "note": "",
+    "created_at": "2026-10-11 11:17:05",
+    "paid_at": "2026-10-11 11:17:45"
+  },
+  {
+    "id": "6acbc28957ad5fa9a30d9081",
+    "complaint_id": "6acbc1f457ad5fa9a30d9080",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 10000.0,
+    "status": "paid",
+    "reference": "PAY-20261011-2362",
+    "note": "",
+    "created_at": "2026-10-11 12:08:25",
+    "paid_at": "2026-10-12 00:39:18"
+  },
+  {
+    "id": "6acbdec752be51a4c8d34fa3",
+    "complaint_id": "6acbdba552be51a4c8d34fa2",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 15000.0,
+    "status": "paid",
+    "reference": "PAY-20261012-1A44",
+    "note": "",
+    "created_at": "2026-10-12 00:38:55",
+    "paid_at": "2026-10-12 00:39:10"
+  },
+  {
+    "id": "6acda3ce988f029478ffa4e5",
+    "complaint_id": "6acda20b988f029478ffa4e2",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 15000.0,
+    "penalty": 0,
+    "penalty_late": 0,
+    "penalty_rating": 0,
+    "net_amount": 15000.0,
+    "status": "paid",
+    "reference": "PAY-20261013-C9EC",
+    "note": "",
+    "created_at": "2026-10-13 08:51:50",
+    "paid_at": "2026-10-13 08:52:42"
+  },
+  {
+    "id": "6acdaa16988f029478ffa4e9",
+    "complaint_id": "6acda973988f029478ffa4e6",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 14000.0,
+    "penalty": 0,
+    "penalty_late": 0,
+    "penalty_rating": 0,
+    "net_amount": 14000.0,
+    "status": "paid",
+    "reference": "PAY-20261013-97BF",
+    "note": "",
+    "created_at": "2026-10-13 09:18:38",
+    "paid_at": "2026-10-13 09:18:45"
+  },
+  {
+    "id": "6ad25d6db789c6d910cc9a22",
+    "complaint_id": "6acd1935738b786085799c11",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 7500.0,
+    "penalty": 0,
+    "penalty_late": 0,
+    "penalty_rating": 0,
+    "net_amount": 7500.0,
+    "status": "paid",
+    "reference": "PAY-20261016-78D2",
+    "note": "",
+    "attempts": 1,
+    "events": [
+      {
+        "at": "2026-10-16 12:22:53",
+        "text": "Payment created by the admin for Rs. 7,500.00",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:23:50",
+        "text": "Attempt 1: paying Rs. 7,500.00 by Bank transfer: a/c ending 9012 (HDFC0001234)",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:23:51",
+        "text": "Payment initiated",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:23:54",
+        "text": "Payee details verified",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:23:56",
+        "text": "Bank authorised the payment",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:23:59",
+        "text": "Money transferred to the payee",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:00",
+        "text": "Payment successful. Transaction ID TXN390167135029",
+        "kind": "success"
+      }
+    ],
+    "created_at": "2026-10-16 12:22:53",
+    "paid_at": "2026-10-16 12:24:00",
+    "failure_reason": null,
+    "method": "bank",
+    "method_label": "Bank transfer: a/c ending 9012 (HDFC0001234)",
+    "progress_at": "2026-10-16 12:24:00",
+    "stage": 5,
+    "started_at": "2026-10-16 12:23:50",
+    "receipt_no": "RCPT-20261016-61C09D",
+    "txn_id": "TXN390167135029"
+  },
+  {
+    "id": "6ad25dc0b789c6d910cc9a23",
+    "complaint_id": "6acd16ac476b458c0b234721",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 8000.0,
+    "penalty": 0,
+    "penalty_late": 0,
+    "penalty_rating": 0,
+    "net_amount": 8000.0,
+    "status": "paid",
+    "reference": "PAY-20261016-ADE0",
+    "note": "",
+    "attempts": 1,
+    "events": [
+      {
+        "at": "2026-10-16 12:24:16",
+        "text": "Payment created by the admin for Rs. 8,000.00",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:40",
+        "text": "Attempt 1: paying Rs. 8,000.00 by UPI: democompany@wastesnap",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:41",
+        "text": "Payment initiated",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:43",
+        "text": "Payee details verified",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:45",
+        "text": "Bank authorised the payment",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:47",
+        "text": "Money transferred to the payee",
+        "kind": "info"
+      },
+      {
+        "at": "2026-10-16 12:24:49",
+        "text": "Payment successful. Transaction ID TXN406369882224",
+        "kind": "success"
+      }
+    ],
+    "created_at": "2026-10-16 12:24:16",
+    "paid_at": "2026-10-16 12:24:49",
+    "failure_reason": null,
+    "method": "upi",
+    "method_label": "UPI: democompany@wastesnap",
+    "progress_at": "2026-10-16 12:24:49",
+    "stage": 5,
+    "started_at": "2026-10-16 12:24:40",
+    "receipt_no": "RCPT-20261016-B579CA",
+    "txn_id": "TXN406369882224"
+  },
+  {
+    "id": "6ad1fa01f39e2f8141e1ab59",
+    "complaint_id": "6ad1f908f39e2f8141e1ab56",
+    "company_id": "6acbb2f475d05be943db379c",
+    "worker_id": "6acbb2f375d05be943db379b",
+    "amount": 15000.0,
+    "penalty": 0,
+    "penalty_late": 0,
+    "penalty_rating": 0,
+    "net_amount": 15000.0,
+    "status": "paid",
+    "reference": "PAY-20261016-D683",
+    "note": "",
+    "created_at": "2026-10-16 15:48:41",
+    "paid_at": "2026-10-16 15:48:46"
+  }
+]

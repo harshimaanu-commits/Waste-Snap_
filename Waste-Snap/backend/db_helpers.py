@@ -692,9 +692,61 @@ def get_resolved_complaints_by_user(user_id):
 # COMPANIES AND PAYMENTS
 # =========================================================
 #
-# Admin pays a company for work on a Resolved complaint.
-# Payment status flow:  pending -> paid
-# (Payments are only records in this demo - no real money moves.)
+# Payments are simulated (no real money moves), but they follow a
+# realistic flow:
+#
+#   requested  -> pending       (a company asks, the admin approves)
+#   requested  -> rejected      (the admin refuses; the company can ask again)
+#   pending    -> processing -> paid        (the admin pays through the
+#                            -> failed       simulated gateway; retry allowed)
+#   pending/failed -> on_hold -> pending    (complaint reopened, then fixed)
+#
+# Every payment keeps a timeline of events ("events") that the live
+# payment screen, the receipt and the company page show.
+
+# -----------------------------------------
+# SMALL HELPERS
+# -----------------------------------------
+
+# One line of a payment's timeline
+def payment_event(text, kind="info"):
+
+    return {"at": datetime.now(), "text": text, "kind": kind}
+
+
+# Rupees as text, e.g. 1500.5 -> "1,500.50"
+def money(value):
+
+    return f"{float(value):,.2f}"
+
+
+# Read an amount typed by a user (more than 0, at most 1,000,000)
+def _parse_amount(amount_text):
+
+    try:
+        amount = Decimal(str(amount_text).strip())
+
+    except InvalidOperation:
+        return None
+
+    if not amount.is_finite() or amount <= 0 or amount > 1000000:
+        return None
+
+    return float(round(amount, 2))
+
+
+# Penalties that apply to a complaint's payment: (late, low rating)
+def _penalties_for(complaint):
+
+    late = LATE_PENALTY if complaint.get("was_late") else 0
+
+    rating = (
+        RATING_PENALTY
+        if complaint.get("rating_penalty") == "approved" else 0
+    )
+
+    return late, rating
+
 
 # -----------------------------------------
 # GET ALL COMPANIES
@@ -712,20 +764,24 @@ def get_companies():
 # -----------------------------------------
 # GET RESOLVED COMPLAINTS THAT HAVE NO PAYMENT YET
 # -----------------------------------------
+#
+# A complaint whose only payment was rejected counts as "no payment".
 
 def get_resolved_without_payment():
 
-    paid_ids = get_db().payments.distinct("complaint_id")
+    taken = get_db().payments.distinct(
+        "complaint_id", {"status": {"$ne": "rejected"}}
+    )
 
     records = get_db().complaints.find(
-        {"status": "Resolved", "_id": {"$nin": paid_ids}}
+        {"status": "Resolved", "_id": {"$nin": taken}}
     ).sort("updated_at", -1)
 
     return [complaint_to_dict(record) for record in records]
 
 
 # -----------------------------------------
-# CREATE A PAYMENT FOR A RESOLVED COMPLAINT
+# ADMIN CREATES A PAYMENT FOR A RESOLVED COMPLAINT
 # -----------------------------------------
 
 def create_payment(complaint_id, company_id, amount_text):
@@ -736,17 +792,10 @@ def create_payment(complaint_id, company_id, amount_text):
     if complaint_object_id is None or company_object_id is None:
         return False
 
-    # Read the amount as money (two decimal places)
-    try:
-        amount = Decimal(str(amount_text).strip())
+    amount = _parse_amount(amount_text)
 
-    except InvalidOperation:
+    if amount is None:
         return False
-
-    if not amount.is_finite() or amount <= 0 or amount > 1000000:
-        return False
-
-    amount = float(round(amount, 2))
 
     # The complaint must be resolved
     complaint = get_db().complaints.find_one(
@@ -766,17 +815,17 @@ def create_payment(complaint_id, company_id, amount_text):
 
     # A late job has LATE_PENALTY taken off the payment.
     # A low rating costs RATING_PENALTY only if the admin approved it.
-    penalty_late = LATE_PENALTY if complaint.get("was_late") else 0
-
-    penalty_rating = (
-        RATING_PENALTY
-        if complaint.get("rating_penalty") == "approved" else 0
-    )
+    penalty_late, penalty_rating = _penalties_for(complaint)
 
     penalty = penalty_late + penalty_rating
 
     if amount <= penalty:
         return False
+
+    # An earlier request for this complaint that was rejected is replaced
+    get_db().payments.delete_one(
+        {"complaint_id": complaint_object_id, "status": "rejected"}
+    )
 
     document = {
         "complaint_id": complaint_object_id,
@@ -795,6 +844,12 @@ def create_payment(complaint_id, company_id, amount_text):
             + secrets.token_hex(2).upper()
         ),
         "note": "",
+        "attempts": 0,
+        "events": [payment_event(
+            f"Payment created by the admin for Rs. {money(amount)}"
+            + (f" (penalty Rs. {money(penalty)}, "
+               f"net Rs. {money(amount - penalty)})" if penalty else "")
+        )],
         "created_at": datetime.now(),
         "paid_at": None
     }
@@ -811,39 +866,293 @@ def create_payment(complaint_id, company_id, amount_text):
 
 
 # -----------------------------------------
-# ADMIN MARKS A PAYMENT AS PAID
+# COMPANY: RESOLVED JOBS IT CAN ASK TO BE PAID FOR
 # -----------------------------------------
 
-def mark_payment_paid(payment_id):
+def get_requestable_complaints(company_id):
+
+    company_object_id = to_object_id(company_id)
+
+    complaints = get_resolved_without_payment()
+
+    # Remember an earlier rejection by this company, to show the reason
+    rejected = {
+        str(p["complaint_id"]): p
+        for p in get_db().payments.find(
+            {"company_id": company_object_id, "status": "rejected"}
+        )
+    }
+
+    for complaint in complaints:
+
+        earlier = rejected.get(complaint["id"])
+
+        complaint["rejected_reason"] = (
+            earlier.get("reject_reason") if earlier else None
+        )
+
+        penalty_late, penalty_rating = _penalties_for(complaint)
+
+        complaint["penalty_late"] = penalty_late
+        complaint["penalty_rating"] = penalty_rating
+
+    return complaints
+
+
+# -----------------------------------------
+# COMPANY ASKS TO BE PAID FOR A RESOLVED JOB
+# -----------------------------------------
+#
+# Returns (True/False, message)
+
+def request_payment(complaint_id, company_id, amount_text, note=""):
+
+    complaint_object_id = to_object_id(complaint_id)
+    company_object_id = to_object_id(company_id)
+
+    if complaint_object_id is None or company_object_id is None:
+        return False, "Complaint not found."
+
+    amount = _parse_amount(amount_text)
+
+    if amount is None:
+        return False, "Enter an amount above 0 (at most 1,000,000)."
+
+    complaint = get_db().complaints.find_one(
+        {"_id": complaint_object_id, "status": "Resolved"}
+    )
+
+    if complaint is None:
+        return False, "Only resolved jobs can be requested."
+
+    penalty_late, penalty_rating = _penalties_for(complaint)
+
+    penalty = penalty_late + penalty_rating
+
+    if amount <= penalty:
+        return False, (
+            f"The amount must be more than the Rs. {money(penalty)} "
+            "penalty for this job."
+        )
+
+    note = str(note).strip()[:300]
+
+    existing = get_db().payments.find_one(
+        {"complaint_id": complaint_object_id}
+    )
+
+    # A request the admin rejected earlier can be sent again
+    if existing is not None and existing["status"] != "rejected":
+        return False, "This job already has a payment or a request."
+
+    details = {
+        "company_id": company_object_id,
+        "worker_id": complaint.get("assigned_worker_id"),
+        "amount": amount,
+        "penalty": penalty,
+        "penalty_late": penalty_late,
+        "penalty_rating": penalty_rating,
+        "net_amount": round(amount - penalty, 2),
+        "status": "requested",
+        "note": note,
+        "reject_reason": None,
+        "attempts": 0
+    }
+
+    request_event = payment_event(
+        f"Company requested Rs. {money(amount)}"
+        + (f': "{note}"' if note else "")
+    )
+
+    if existing is not None:
+
+        get_db().payments.update_one(
+            {"_id": existing["_id"], "status": "rejected"},
+            {"$set": details, "$push": {"events": request_event}}
+        )
+
+        return True, "Your payment request was sent again."
+
+    document = dict(details)
+
+    document.update({
+        "complaint_id": complaint_object_id,
+        "reference": (
+            "PAY-"
+            + datetime.now().strftime("%Y%m%d")
+            + "-"
+            + secrets.token_hex(2).upper()
+        ),
+        "events": [request_event],
+        "created_at": datetime.now(),
+        "paid_at": None
+    })
+
+    try:
+        get_db().payments.insert_one(document)
+
+    except DuplicateKeyError:
+        return False, "This job already has a payment or a request."
+
+    return True, "Payment requested. The admin will review it."
+
+
+# -----------------------------------------
+# ADMIN APPROVES A COMPANY'S REQUEST (the amount can be changed)
+# -----------------------------------------
+
+def approve_payment_request(payment_id, amount_text=None):
 
     object_id = to_object_id(payment_id)
 
     if object_id is None:
-        return False
+        return False, "Payment not found."
 
-    # Do not pay while a low-rating review is still waiting for the admin
-    payment = get_db().payments.find_one({"_id": object_id})
-
-    if payment is not None:
-
-        complaint = get_db().complaints.find_one(
-            {"_id": payment["complaint_id"]}
-        )
-
-        if complaint and complaint.get("rating_penalty") == "pending":
-            return False
-
-    result = get_db().payments.update_one(
-        {"_id": object_id, "status": "pending"},
-        {"$set": {"status": "paid", "paid_at": datetime.now()}}
+    payment = get_db().payments.find_one(
+        {"_id": object_id, "status": "requested"}
     )
 
-    return result.modified_count == 1
+    if payment is None:
+        return False, "This request was already handled."
+
+    amount = (
+        _parse_amount(amount_text)
+        if amount_text not in (None, "") else payment["amount"]
+    )
+
+    if amount is None:
+        return False, "Enter an amount above 0 (at most 1,000,000)."
+
+    complaint = get_db().complaints.find_one(
+        {"_id": payment["complaint_id"]}
+    ) or {}
+
+    # Penalties are worked out again at approval time
+    penalty_late, penalty_rating = _penalties_for(complaint)
+
+    penalty = penalty_late + penalty_rating
+
+    if amount <= penalty:
+        return False, (
+            f"The amount must be more than the Rs. {money(penalty)} penalty."
+        )
+
+    changed = (
+        f" (the company asked for Rs. {money(payment['amount'])})"
+        if amount != payment["amount"] else ""
+    )
+
+    result = get_db().payments.update_one(
+        {"_id": object_id, "status": "requested"},
+        {"$set": {"status": "pending",
+                  "amount": amount,
+                  "penalty": penalty,
+                  "penalty_late": penalty_late,
+                  "penalty_rating": penalty_rating,
+                  "net_amount": round(amount - penalty, 2)},
+         "$push": {"events": payment_event(
+             f"Admin approved the request for Rs. {money(amount)}{changed}"
+         )}}
+    )
+
+    if result.modified_count != 1:
+        return False, "This request was already handled."
+
+    return True, "Request approved. You can now pay it."
+
+
+# -----------------------------------------
+# ADMIN REJECTS A COMPANY'S REQUEST
+# -----------------------------------------
+
+def reject_payment_request(payment_id, reason):
+
+    object_id = to_object_id(payment_id)
+
+    reason = str(reason).strip()[:300]
+
+    if object_id is None:
+        return False, "Payment not found."
+
+    if not reason:
+        return False, "Please give a reason for rejecting the request."
+
+    result = get_db().payments.update_one(
+        {"_id": object_id, "status": "requested"},
+        {"$set": {"status": "rejected", "reject_reason": reason},
+         "$push": {"events": payment_event(
+             f"Admin rejected the request: {reason}", "error"
+         )}}
+    )
+
+    if result.modified_count != 1:
+        return False, "This request was already handled."
+
+    return True, "Request rejected. The company can ask again."
 
 
 # -----------------------------------------
 # GET PAYMENTS (all, or for one company)
 # -----------------------------------------
+
+# Turn payment records into dictionaries for the pages
+def _payments_to_dicts(records):
+
+    complaints = {
+        complaint["_id"]: complaint
+        for complaint in get_db().complaints.find(
+            {"_id": {"$in": [r["complaint_id"] for r in records]}}
+        )
+    }
+
+    people_ids = set()
+
+    for record in records:
+        people_ids.add(record["company_id"])
+
+        if record.get("worker_id"):
+            people_ids.add(record["worker_id"])
+
+    people = {
+        user["_id"]: user
+        for user in get_db().users.find(
+            {"_id": {"$in": list(people_ids)}}
+        )
+    }
+
+    payments = []
+
+    for record in records:
+
+        payment = dict(record)
+
+        payment["id"] = str(payment.pop("_id"))
+        payment["company_id"] = str(record["company_id"])
+
+        # Payments made before penalties existed have no penalty
+        payment.setdefault("penalty", 0)
+        payment.setdefault("net_amount", payment["amount"])
+        payment.setdefault("events", [])
+        payment.setdefault("attempts", 0)
+
+        complaint = complaints.get(record["complaint_id"], {})
+        company = people.get(record["company_id"], {})
+        worker = people.get(record.get("worker_id"), {})
+
+        payment["complaint_ref"] = str(record["complaint_id"])[-6:]
+        payment["complaint_type"] = complaint.get("type", "")
+        payment["complaint_location"] = complaint.get("location", "")
+        payment["complaint_status"] = complaint.get("status", "")
+        payment["rating"] = complaint.get("feedback_rating")
+        payment["rating_review"] = complaint.get("rating_penalty")
+        payment["company_name"] = company.get("name", "Unknown")
+        payment["company_email"] = company.get("email", "")
+        payment["worker_name"] = worker.get("name", "-")
+
+        payments.append(payment)
+
+    return payments
+
 
 def get_payments(company_id=None):
 
@@ -856,46 +1165,23 @@ def get_payments(company_id=None):
         get_db().payments.find(filters).sort("created_at", -1)
     )
 
-    # Look up the related complaints and companies
-    complaints = {
-        complaint["_id"]: complaint
-        for complaint in get_db().complaints.find(
-            {"_id": {"$in": [r["complaint_id"] for r in records]}}
-        )
-    }
+    return _payments_to_dicts(records)
 
-    companies = {
-        company["_id"]: company
-        for company in get_db().users.find(
-            {"_id": {"$in": [r["company_id"] for r in records]}}
-        )
-    }
 
-    payments = []
+# One payment (or None)
+def get_payment(payment_id):
 
-    for record in records:
+    object_id = to_object_id(payment_id)
 
-        payment = dict(record)
+    if object_id is None:
+        return None
 
-        payment["id"] = str(payment.pop("_id"))
+    record = get_db().payments.find_one({"_id": object_id})
 
-        # Payments made before penalties existed have no penalty
-        payment.setdefault("penalty", 0)
-        payment.setdefault("net_amount", payment["amount"])
+    if record is None:
+        return None
 
-        complaint = complaints.get(record["complaint_id"], {})
-        company = companies.get(record["company_id"], {})
-
-        payment["complaint_ref"] = str(record["complaint_id"])[-6:]
-        payment["complaint_type"] = complaint.get("type", "")
-        payment["complaint_location"] = complaint.get("location", "")
-        payment["rating"] = complaint.get("feedback_rating")
-        payment["rating_review"] = complaint.get("rating_penalty")
-        payment["company_name"] = company.get("name", "Unknown")
-
-        payments.append(payment)
-
-    return payments
+    return _payments_to_dicts([record])[0]
 
 
 
@@ -1277,10 +1563,10 @@ def decide_rating_penalty(complaint_id, approve, note=""):
             "when the payment is created."
         )
 
-    if payment["status"] == "paid":
+    if payment["status"] in ("paid", "processing"):
         return True, (
-            "Penalty approved, but the payment was already paid, so "
-            "nothing could be deducted."
+            "Penalty approved, but the payment was already paid (or is "
+            "being paid), so nothing could be deducted."
         )
 
     penalty = payment.get("penalty", 0) + RATING_PENALTY
@@ -1291,7 +1577,10 @@ def decide_rating_penalty(complaint_id, approve, note=""):
             "penalty": penalty,
             "penalty_rating": RATING_PENALTY,
             "net_amount": max(round(payment["amount"] - penalty, 2), 0)
-        }}
+        },
+         "$push": {"events": payment_event(
+             f"Low-rating penalty of Rs. {RATING_PENALTY} approved by the admin"
+         )}}
     )
 
     return True, f"Penalty approved. Rs. {RATING_PENALTY} deducted from the payment."

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Pay {{ payment.company_name }} | WasteSnap{% endblock %}
+
+{% block content %}
+
+<main class="page page-narrow" style="width:min(860px, calc(100% - 48px))">
+
+    <div class="page-header">
+        <div>
+            <h1>Checkout</h1>
+            <p>Demo payment gateway. No real money moves.</p>
+        </div>
+
+        <a href="{{ url_for('admin.payments') }}" class="btn btn-light">
+            <i class="fa-solid fa-arrow-left"></i> Back to payments
+        </a>
+    </div>
+
+    {% if payment.rating_review == "pending" %}
+        <div class="flash flash-warning">
+            A low-rating review is waiting for your decision, so this payment cannot be paid yet.
+            <a href="{{ url_for('admin.reviews') }}"><strong>Review it now</strong></a>
+        </div>
+    {% endif %}
+
+    {% if payment.status == "failed" %}
+        <div class="flash flash-danger">
+            <strong>Attempt {{ payment.attempts }} failed:</strong> {{ payment.failure_reason }}
+            Choose a method and try again.
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Payment summary</h2>
+
+        <table class="table" style="box-shadow:none">
+            <tr><td>Paying</td><td><strong>{{ payment.company_name }}</strong> <span class="muted small">{{ payment.company_email }}</span></td></tr>
+            <tr><td>For</td><td>{{ payment.complaint_type }} · #{{ payment.complaint_ref }} · {{ payment.complaint_location }}</td></tr>
+            <tr><td>Reference</td><td>{{ payment.reference }}</td></tr>
+            <tr><td>Amount</td><td>₹{{ "%.2f"|format(payment.amount) }}</td></tr>
+            {% if payment.penalty_late %}
+                <tr><td>Late penalty</td><td><span class="chip chip-red">-₹{{ "%.2f"|format(payment.penalty_late) }}</span> the worker finished after the deadline</td></tr>
+            {% endif %}
+            {% if payment.penalty_rating %}
+                <tr><td>Low-rating penalty</td><td><span class="chip chip-red">-₹{{ "%.2f"|format(payment.penalty_rating) }}</span> approved by you</td></tr>
+            {% endif %}
+            <tr><td><strong>You pay</strong></td><td><strong style="font-size:20px">₹{{ "%.2f"|format(payment.net_amount) }}</strong></td></tr>
+        </table>
+    </div>
+
+    <form class="card app-form" action="{{ url_for('admin.checkout', payment_id=payment.id) }}" method="POST" autocomplete="off" id="checkout" data-selected="{{ selected }}">
+
+        <h2>Payment method</h2>
+
+        <div class="method-tabs">
+            <label class="method-tab">
+                <input type="radio" name="method" value="upi" {{ 'checked' if selected == 'upi' }}>
+                <span><i class="fa-solid fa-mobile-screen"></i> UPI</span>
+            </label>
+            <label class="method-tab">
+                <input type="radio" name="method" value="bank" {{ 'checked' if selected == 'bank' }}>
+                <span><i class="fa-solid fa-building-columns"></i> Bank transfer</span>
+            </label>
+            <label class="method-tab">
+                <input type="radio" name="method" value="card" {{ 'checked' if selected == 'card' }}>
+                <span><i class="fa-solid fa-credit-card"></i> Card</span>
+            </label>
+        </div>
+
+        <!-- UPI -->
+        <div class="method-panel" data-panel="upi">
+            <div class="form-group">
+                <label for="upi_id">Payee's UPI ID</label>
+                <input type="text" id="upi_id" name="upi_id" value="{{ form.get('upi_id') or suggested_upi }}" placeholder="name@bank">
+            </div>
+            <div class="form-group">
+                <label for="upi_pin">UPI PIN</label>
+                <input type="password" id="upi_pin" name="upi_pin" maxlength="6" inputmode="numeric" placeholder="4 or 6 digits">
+            </div>
+            <p class="hint">
+                Demo: PIN <code>1234</code> succeeds. PIN <code>0000</code> is declined by the "bank".
+            </p>
+            <div class="actions" style="margin:6px 0 0">
+                <button type="button" class="btn btn-light btn-small" data-fill='{"upi_pin":"1234"}'>Fill a working test</button>
+                <button type="button" class="btn btn-light btn-small" data-fill='{"upi_pin":"0000"}'>Fill a failing test</button>
+            </div>
+        </div>
+
+        <!-- BANK -->
+        <div class="method-panel" data-panel="bank">
+            <div class="form-group">
+                <label for="bank_holder">Account holder name</label>
+                <input type="text" id="bank_holder" name="bank_holder" value="{{ form.get('bank_holder') or suggested_holder }}">
+            </div>
+            <div class="form-group">
+                <label for="bank_account">Account number</label>
+                <input type="text" id="bank_account" name="bank_account" value="{{ form.get('bank_account') or '' }}" inputmode="numeric" placeholder="9 to 18 digits">
+            </div>
+            <div class="form-group">
+                <label for="bank_ifsc">IFSC code</label>
+                <input type="text" id="bank_ifsc" name="bank_ifsc" value="{{ form.get('bank_ifsc') or '' }}" placeholder="HDFC0001234">
+            </div>
+            <p class="hint">
+                Demo: any valid account works. An account number ending in <code>0000</code> does not exist and fails.
+            </p>
+            <div class="actions" style="margin:6px 0 0">
+                <button type="button" class="btn btn-light btn-small" data-fill='{"bank_account":"123456789012","bank_ifsc":"HDFC0001234"}'>Fill a working test</button>
+                <button type="button" class="btn btn-light btn-small" data-fill='{"bank_account":"123456780000","bank_ifsc":"HDFC0001234"}'>Fill a failing test</button>
+            </div>
+        </div>
+
+        <!-- CARD -->
+        <div class="method-panel" data-panel="card">
+            <div class="form-group">
+                <label for="card_number">Card number</label>
+                <input type="text" id="card_number" name="card_number" inputmode="numeric" maxlength="23" placeholder="4111 1111 1111 1111">
+            </div>
+            <div class="form-group">
+                <label for="card_name">Name on card</label>
+                <input type="text" id="card_name" name="card_name" value="{{ form.get('card_name') or 'WasteSnap Municipal' }}">
+            </div>
+            <div style="display:flex;gap:14px">
+                <div class="form-group" style="flex:1">
+                    <label for="card_expiry">Expiry (MM/YY)</label>
+                    <input type="text" id="card_expiry" name="card_expiry" maxlength="5" placeholder="12/30">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label for="card_cvv">CVV</label>
+                    <input type="password" id="card_cvv" name="card_cvv" maxlength="4" inputmode="numeric" placeholder="123">
+                </div>
+            </div>
+            <p class="hint">
+                Demo cards: <code>4111 1111 1111 1111</code> succeeds.
+                <code>4000 0000 0000 0002</code> is declined (insufficient funds).
+                <code>4000 0000 0000 0127</code> fails the CVV check. Card details are never saved.
+            </p>
+            <div class="actions" style="margin:6px 0 0">
+                <button type="button" class="btn btn-light btn-small" data-fill='{"card_number":"4111 1111 1111 1111","card_expiry":"12/30","card_cvv":"123"}'>Fill a working test</button>
+                <button type="button" class="btn btn-light btn-small" data-fill='{"card_number":"4000 0000 0000 0002","card_expiry":"12/30","card_cvv":"123"}'>Fill a failing test</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-block" style="margin-top:20px" {{ 'disabled' if payment.rating_review == 'pending' }}>
+            <i class="fa-solid fa-lock"></i> Confirm and pay ₹{{ "%.2f"|format(payment.net_amount) }}
+        </button>
+
+        <p class="hint" style="text-align:center">
+            This is a simulated gateway for the demo. Nothing is charged.
+        </p>
+
+    </form>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/payment_checkout.js') }}"></script>
+
+{% endblock %}
